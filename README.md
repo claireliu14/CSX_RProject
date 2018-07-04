@@ -5,5 +5,5 @@
 
 ### Week 1
 * in class
-1. [homework1] (https://yuly830914.github.io/CSX_RProject/week_01/homework1.html): create a rmarkdown file
+1. [homework1](https://yuly830914.github.io/CSX_RProject/week_01/homework1.html): create a rmarkdown file
 * At home
