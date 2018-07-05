@@ -1,5 +1,6 @@
 ---
-title: "homework1"
+title: "DataCamp - concept of R"
+author: "Claire Liu"
 output: html_document
 ---
 
@@ -7,22 +8,94 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+### Learn with DataCamp
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+> 第一週的回家進度是了解R語言的基礎操作，初次接觸R，覺得它和python很類似    
+> [DataCamp](https://www.datacamp.com/home) 這個網頁有基本的語法可以練習，接下來的內容為練習筆記。
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+### Introduction to R
 
-```{r cars}
-summary(cars)
+#### Intro to basics
+  * Arithmetric: 和其他程式語言一樣，有一般的加減乘除
+  * Variable assignment: R的變數不需要預先定義資料型態，用箭號<-指定
+  * Data types: class(x) 函式可以知道資料型態，共有三種分別是numeric, character, logical
+  
+```{r add, echo=TRUE, eval=TRUE}
+# basic operation: + (add)
+a <- 7 + 2
+a
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r minus, echo=TRUE, eval=TRUE}
+# basic operation: - (minus)
+a <- 7 - 2
+a
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r divide, echo=TRUE, eval=TRUE}
+# basic operation: / (divide)
+a <- 7 / 2
+a
+```
+
+```{r multiply, echo=TRUE, eval=TRUE}
+# basic operation: * (multiply)
+a <- 7 * 2
+a
+```
+
+```{r power, echo=TRUE, eval=TRUE}
+# basic operation: ^ (power), same as **
+a <- 7 ^ 2
+a
+```
+
+```{r mod, echo=TRUE, eval=TRUE}
+# basic operation: %% (mod)
+a <- 7 %% 2
+a
+```
+
+```{r data type, echo=TRUE, eval=TRUE}
+# class() can be used to view the data type
+class(3.14)
+class("Hello World")
+class(TRUE)
+```     
+
+#### Vectors
+  * Create: c(x, y,  ...)函式可以用來建立vector，其中所有元素都必須是相同的資料型態
+  * Naming: names(vector) <- c("x", "y", ... ) 可以指定vector的欄位名稱、該資料所代表的意義等
+  * Calculating: vector之間可以做基本的運算，element-wise
+  * Comparing: vector之間可以相互比較，或是和單一值做比較
+  * Selection: 可以透過一個範圍、欄位名稱或是指定位置指出特定的vector elements，要注意的是vector的第一個元素編號是1     
+      
+  以下用一個分數的例子來示範：
+  
+```{r create and name}
+# c() can create a vector with same data type
+# if there is a logical in numeric vector, then it will change to numeric ( FALSE=0, TRUE=1 )
+# if there is a character in numeric vector, then all elements will convert to be characters
+score <- c(100, 60, 89, 95, 80, 50)
+names(score) <- c("Bob", "Eva", "Tom", "Amy", "Ivy", "Ella")
+score
+```  
+
+```{r calculus, echo=TRUE, eval=TRUE}
+# score_plus likes the additional bonus points
+score_plus <- c(-30, 10, -30, -20, 10, -5)
+score_final <- score + score_plus
+score_final
+```  
+
+```{r compare, echo=TRUE, eval=TRUE}
+# Know if each student’s score is failing or not
+comp <- score_final < 60
+comp
+```  
+
+```{r select, echo=TRUE, eval=TRUE}
+# get the list whose score is less than 60, but not contain Ella
+fail_list <- score_final[comp[1:5]]
+fail_list
+```
