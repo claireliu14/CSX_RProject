@@ -182,7 +182,7 @@ class(3.14)</code></pre>
 <li>Naming: names(vector) &lt;- c(“x”, “y”, … ) 可以指定vector的欄位名稱、該資料所代表的意義等</li>
 <li>Calculating: vector之間可以做基本的運算，element-wise</li>
 <li>Comparing: vector之間可以相互比較，或是和單一值做比較</li>
-<li>Selection: 可以透過一個範圍、欄位名稱或是指定位置指出特定的vector elements，要注意的是vector的第一個元素編號是1</li>
+<li>Selection: 可以透過一個範圍、欄位名稱或是指定位置指出特定的vector elements，第一個元素編號是1</li>
 </ul>
 <p>以下用一個分數的例子來示範：</p>
 <pre class="r"><code># c() can create a vector with same data type
@@ -209,6 +209,56 @@ fail_list &lt;- score_final[comp[1:5]]
 fail_list</code></pre>
 <pre><code>## Tom 
 ##  59</code></pre>
+</div>
+<div id="matrices" class="section level4">
+<h4>Matrices</h4>
+<ul>
+<li>Create: matrix(data, nrow, ncol, byrow, dimnames)
+<ol style="list-style-type: decimal">
+<li>data 可以透過 c() 或 1:n 的 range 來建立</li>
+<li>nrow 代表水平有幾筆資料</li>
+<li>ncol 指定垂直有幾個欄位</li>
+<li>byrow 指定資料儲存的方式，TRUE為放滿一個row再換下一個，FALSE為放滿一個col再換下一個，預設是FALSE</li>
+<li>dimnames 和list有點關係，使用list(c(“x”, “y”, “z”), c(“a”, “b”)) 前面指定colnames，後者指定rownames</li>
+</ol></li>
+<li>Naming: 如果在建立matrix的時候沒有使用到dimnames，可以用colnames() 和 rownames() 另外設定</li>
+<li>Adding: 可以當作合併兩個（含）以上的 metrix 或 append vector 到 matrix上使用，分別有 rbind() 和 cbind()</li>
+<li>Calculus: matrix也有基本的運算，如 colSums、rowSums、colMeans、rowMeans，也可以針對一個matrix或兩個matrix做加減乘除</li>
+<li>Selection: matrix[row, col]，可以用範圍或指定的方式提領出指定的資料</li>
+</ul>
+<p>不同於vector是一維的，matrix用來表達二維的資料，資料型態也必須一致</p>
+<pre class="r"><code># create matrix and give column and row names
+score_matrix &lt;- matrix(c(100, 60, 89, 95, 80, 50), byrow = TRUE, nrow = 2)
+colnames(score_matrix) &lt;- c(&quot;Math&quot;, &quot;Eng&quot;, &quot;Chi&quot;)
+rownames(score_matrix) &lt;- c(&quot;Tom&quot;, &quot;Amy&quot;)
+score_matrix</code></pre>
+<pre><code>##     Math Eng Chi
+## Tom  100  60  89
+## Amy   95  80  50</code></pre>
+<pre class="r"><code># using byrow = FALSE, we can see how different with byrow = TRUE
+# rbind add more student
+score_matrix2 &lt;- matrix(c(100, 90, 80, 70, 60, 50), byrow = FALSE, nrow = 2)
+rownames(score_matrix2) &lt;- c(&quot;Ivy&quot;, &quot;Ken&quot;)
+score_table &lt;- rbind(score_matrix, score_matrix2)
+score_table</code></pre>
+<pre><code>##     Math Eng Chi
+## Tom  100  60  89
+## Amy   95  80  50
+## Ivy  100  80  60
+## Ken   90  70  50</code></pre>
+<pre class="r"><code># Calculating the semester average by using rowMeans
+mean &lt;- rowMeans(score_table)
+score_table &lt;- cbind(score_table, mean)
+score_table</code></pre>
+<pre><code>##     Math Eng Chi mean
+## Tom  100  60  89   83
+## Amy   95  80  50   75
+## Ivy  100  80  60   80
+## Ken   90  70  50   70</code></pre>
+<pre class="r"><code># print students' math score without Tom
+score_table[2:4, 1]</code></pre>
+<pre><code>## Amy Ivy Ken 
+##  95 100  90</code></pre>
 </div>
 </div>
 

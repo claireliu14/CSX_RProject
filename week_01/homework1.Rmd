@@ -68,7 +68,7 @@ class(TRUE)
   * Naming: names(vector) <- c("x", "y", ... ) 可以指定vector的欄位名稱、該資料所代表的意義等
   * Calculating: vector之間可以做基本的運算，element-wise
   * Comparing: vector之間可以相互比較，或是和單一值做比較
-  * Selection: 可以透過一個範圍、欄位名稱或是指定位置指出特定的vector elements，要注意的是vector的第一個元素編號是1     
+  * Selection: 可以透過一個範圍、欄位名稱或是指定位置指出特定的vector elements，第一個元素編號是1     
       
   以下用一個分數的例子來示範：
   
@@ -99,3 +99,43 @@ comp
 fail_list <- score_final[comp[1:5]]
 fail_list
 ```
+
+#### Matrices
+  * Create: matrix(data, nrow, ncol, byrow, dimnames)
+    1. data 可以透過 c() 或 1:n 的 range 來建立
+    2. nrow 代表水平有幾筆資料
+    3. ncol 指定垂直有幾個欄位
+    4. byrow 指定資料儲存的方式，TRUE為放滿一個row再換下一個，FALSE為放滿一個col再換下一個，預設是FALSE
+    5. dimnames 和list有點關係，使用list(c(“x", "y", "z"), c("a", "b")) 前面指定colnames，後者指定rownames    
+    
+  * Naming: 如果在建立matrix的時候沒有使用到dimnames，可以用colnames() 和 rownames() 另外設定
+  * Adding: 可以當作合併兩個（含）以上的 metrix 或 append vector 到 matrix上使用，分別有 rbind() 和 cbind()
+  * Calculus: matrix也有基本的運算，如 colSums、rowSums、colMeans、rowMeans，也可以針對一個matrix或兩個matrix做加減乘除
+  * Selection: matrix[row, col]，可以用範圍或指定的方式提領出指定的資料    
+  
+  不同於vector是一維的，matrix用來表達二維的資料，資料型態也必須一致
+
+```{r matrix create naming}
+# create matrix and give column and row names
+score_matrix <- matrix(c(100, 60, 89, 95, 80, 50), byrow = TRUE, nrow = 2)
+colnames(score_matrix) <- c("Math", "Eng", "Chi")
+rownames(score_matrix) <- c("Tom", "Amy")
+score_matrix
+```  
+
+```{r matrix create}
+# using byrow = FALSE, we can see how different with byrow = TRUE
+# rbind add more student
+score_matrix2 <- matrix(c(100, 90, 80, 70, 60, 50), byrow = FALSE, nrow = 2)
+rownames(score_matrix2) <- c("Ivy", "Ken")
+score_table <- rbind(score_matrix, score_matrix2)
+score_table
+
+# Calculating the semester average by using rowMeans
+mean <- rowMeans(score_table)
+score_table <- cbind(score_table, mean)
+score_table
+
+# print students' math score without Tom
+score_table[2:4, 1]
+```  
