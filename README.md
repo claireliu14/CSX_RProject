@@ -6,9 +6,12 @@
 * In Class
     1. Install GitHub Desktop
     2. Install R & RStudio
-    3. Create a RMarkDown file: [homework1](https://yuly830914.github.io/CSX_RProject/week_01/homework1.html)
+    3. Create and Edit README.md
+    4. Create a RMarkDown file
     
 * At Home
-    1. DataCamp
+    1. DataCamp - Introduction to R: [homework1](https://yuly830914.github.io/CSX_RProject/week_01/homework1.html)
+    2. DataCamp - Intermediate R
+    3. DataCamp - Introduction to the Tidyverse
 
 ### Week 02
