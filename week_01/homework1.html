@@ -168,12 +168,8 @@ a &lt;- 7 %% 2
 a</code></pre>
 <pre><code>## [1] 1</code></pre>
 <pre class="r"><code># class() can be used to view the data type
-class(3.14)</code></pre>
-<pre><code>## [1] &quot;numeric&quot;</code></pre>
-<pre class="r"><code>class(&quot;Hello World&quot;)</code></pre>
-<pre><code>## [1] &quot;character&quot;</code></pre>
-<pre class="r"><code>class(TRUE)</code></pre>
-<pre><code>## [1] &quot;logical&quot;</code></pre>
+c(class(3.14), class(&quot;Hello World&quot;), class(TRUE))</code></pre>
+<pre><code>## [1] &quot;numeric&quot;   &quot;character&quot; &quot;logical&quot;</code></pre>
 </div>
 <div id="vectors" class="section level4">
 <h4>Vectors</h4>
@@ -259,6 +255,125 @@ score_table</code></pre>
 score_table[2:4, 1]</code></pre>
 <pre><code>## Amy Ivy Ken 
 ##  95 100  90</code></pre>
+</div>
+<div id="factors" class="section level4">
+<h4>Factors</h4>
+<p>Factors 是用來表達有限的、分類的資料，可以視為 vector 應用的延伸。分為 nominal 和 ordinal 兩種分類變數：nominal 例如動物、冰棒的口味等，這類沒有順序之分，無法比較的名目。反之，ordinal 有順序、可以比較，例如溫度高低、重量大小等。</p>
+<ul>
+<li>Create: factor( vertex ) 用來建立 factor</li>
+<li>Levels: levels() 可以用來備註資料的項目，不重複地表達所有的column name，會按照字母排序，可以更改level name</li>
+<li>Order: ordered/order = TRUE 可以表達 ordinal的資料，這些levels的比較關係，預設是FALSE
+<ol style="list-style-type: decimal">
+<li>沒有 order 的資料是不能互相比較的，舉例：男生女生、口味等無從比較</li>
+<li>有 order 的資料可以用 levels() 由小到大指定它們之間的關係，再來就可以用比較運算子作比較</li>
+</ol></li>
+<li>Summary: summary() 函式對 vector 來說可以查詢他的資料筆數和資料型態，對 factor 而言可以統計該 levels name 出現的次數</li>
+<li>Print: 印出 factor 時會有一行是原始資料，下一行是 levels</li>
+</ul>
+<pre class="r"><code># nominal example: gender
+# this kind of data can rename by alphabetical order
+survey_vector &lt;- c(&quot;M&quot;, &quot;F&quot;, &quot;F&quot;, &quot;M&quot;, &quot;M&quot;)
+factor_survey_vector &lt;- factor(survey_vector)
+levels(factor_survey_vector) &lt;- c(&quot;Female&quot;, &quot;Male&quot;)
+factor_survey_vector</code></pre>
+<pre><code>## [1] Male   Female Female Male   Male  
+## Levels: Female Male</code></pre>
+<pre class="r"><code># ordinal example: Temperature
+# set order = TRUE and give it ordered levels
+temperature_vector &lt;- c(&quot;High&quot;, &quot;Low&quot;, &quot;High&quot;, &quot;Low&quot;, &quot;Medium&quot;)
+factor_temperature_vector &lt;- factor(temperature_vector, ordered = TRUE, levels = c(&quot;Low&quot;, &quot;Medium&quot;, &quot;High&quot;))
+factor_temperature_vector</code></pre>
+<pre><code>## [1] High   Low    High   Low    Medium
+## Levels: Low &lt; Medium &lt; High</code></pre>
+<pre class="r"><code># put vector in summary()
+summary(survey_vector)</code></pre>
+<pre><code>##    Length     Class      Mode 
+##         5 character character</code></pre>
+<pre class="r"><code># put factor in summary()
+summary(factor_survey_vector)</code></pre>
+<pre><code>## Female   Male 
+##      2      3</code></pre>
+<pre class="r"><code># compare two different temperature, Is data analyst 1 (High) lower than data analyst 2 (Low) ?
+da1 &lt;- factor_temperature_vector[1]
+da2 &lt;- factor_temperature_vector[2]
+da1 &lt; da2</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+</div>
+<div id="data-frame" class="section level4">
+<h4>Data Frame</h4>
+<p>Data frome 可視為多個 vecotr 組合而成的二維資料，類似 table 的概念，一個 row 就是一整筆可包含不同資料型態的資料</p>
+<ul>
+<li>Create: data.frame( v1, v2, v3 … )</li>
+<li>Print: head(df) 或 tail(df) 分別可用來印出前幾筆和後幾筆資料，適合用於資料量大的時候</li>
+<li>Structure: str(df) 用來分析 data frame 有幾筆資料、多少欄位、欄位名稱、欄位資料型態</li>
+<li>Selection: data frame 在提取這部分提供了許多方式
+<ol style="list-style-type: decimal">
+<li>by row and column number: 同 matrix</li>
+<li>by column name: df$colname, df[ , “colname”] 可以和 row number 混合使用</li>
+<li>subset: subset( df, subset = some_condition, select = columns ) 用以針對欄位資料設定某些條件</li>
+</ol></li>
+<li>Sorting: order() 可以針對欄位資料進行排序</li>
+</ul>
+<pre class="r"><code># create data frame by vectors
+name &lt;- c(&quot;Claire&quot;,  &quot;Sharon&quot;,  &quot;Johnson&quot;, &quot;Mark&quot;)
+gender &lt;- c(&quot;F&quot;, &quot;F&quot;, &quot;M&quot;, &quot;M&quot;)
+age &lt;- c(23, 25, 30, 18)
+married &lt;- c(FALSE, FALSE, TRUE, FALSE)
+employee_df &lt;- data.frame(name, gender, age, married)
+employee_df</code></pre>
+<pre><code>##      name gender age married
+## 1  Claire      F  23   FALSE
+## 2  Sharon      F  25   FALSE
+## 3 Johnson      M  30    TRUE
+## 4    Mark      M  18   FALSE</code></pre>
+<pre class="r"><code># structure
+str(employee_df)</code></pre>
+<pre><code>## 'data.frame':    4 obs. of  4 variables:
+##  $ name   : Factor w/ 4 levels &quot;Claire&quot;,&quot;Johnson&quot;,..: 1 4 2 3
+##  $ gender : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 1 1 2 2
+##  $ age    : num  23 25 30 18
+##  $ married: logi  FALSE FALSE TRUE FALSE</code></pre>
+<pre class="r"><code># sorting by age
+pos &lt;- order(employee_df$age)
+employee_df[pos, ]</code></pre>
+<pre><code>##      name gender age married
+## 4    Mark      M  18   FALSE
+## 1  Claire      F  23   FALSE
+## 2  Sharon      F  25   FALSE
+## 3 Johnson      M  30    TRUE</code></pre>
+<pre class="r"><code># select males
+subset(employee_df, gender == &quot;M&quot;)</code></pre>
+<pre><code>##      name gender age married
+## 3 Johnson      M  30    TRUE
+## 4    Mark      M  18   FALSE</code></pre>
+</div>
+<div id="lists" class="section level4">
+<h4>Lists</h4>
+<p>List 可包含的資料更廣泛，可以整合前面的 vector, matrix, factor 類似 database 的概念，這代表在數據型態不固定的環境中，我們可以用 list 加以合併，再以不同的項目層層存取。舉例：一間學校可能會有老師、學生、校園設備等資料。</p>
+<pre class="r"><code># use matrix and factor to create list and renaming 
+school_list &lt;- list(student = score_table, teacher = employee_df)
+school_list</code></pre>
+<pre><code>## $student
+##     Math Eng Chi mean
+## Tom  100  60  89   83
+## Amy   95  80  50   75
+## Ivy  100  80  60   80
+## Ken   90  70  50   70
+## 
+## $teacher
+##      name gender age married
+## 1  Claire      F  23   FALSE
+## 2  Sharon      F  25   FALSE
+## 3 Johnson      M  30    TRUE
+## 4    Mark      M  18   FALSE</code></pre>
+<pre class="r"><code># select all the teachers' name in the school
+school_list$teacher[, &quot;name&quot;]</code></pre>
+<pre><code>## [1] Claire  Sharon  Johnson Mark   
+## Levels: Claire Johnson Mark Sharon</code></pre>
+<pre class="r"><code># select Amy's scores
+school_list[[1]][1,]</code></pre>
+<pre><code>## Math  Eng  Chi mean 
+##  100   60   89   83</code></pre>
 </div>
 </div>
 
