@@ -209,12 +209,7 @@ if(sum_li &gt; sum_fb) {
 </div>
 <div id="the-apply-family" class="section level3">
 <h3>The apply family</h3>
-<div id="lapply" class="section level5">
-<h5>lapply</h5>
-<pre><code>1. lapply ( list_name, func ): simplify for loop，針對list裡面的每個 element 執行後面的動作, output = list
-2. unlist ( ) # print without list format
-3. anonymous function: no function name call at second parameter: lapply ( x, function(y) { } )    </code></pre>
-</div>
+<p>R 提供了 apply 系列，用來處理由於資料分析不免會使用到大量迴圈來做處理，但在 R 程式中直接使用迴圈會降低程式執行的效率， ##### lapply 1. lapply ( list_name, func ): simplify for loop，針對list裡面的每個 element 執行後面的動作, output = list 2. unlist ( ) # print without list format 3. anonymous function: no function name call at second parameter: lapply ( x, function(y) { } )</p>
 <div id="sapply" class="section level5">
 <h5>sapply</h5>
 <pre><code>1. simplify list to array

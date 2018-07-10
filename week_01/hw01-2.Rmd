@@ -84,6 +84,7 @@ if(sum_li > sum_fb) {
 ```
 
 ### The apply family
+R 提供了 apply 系列，用來處理由於資料分析不免會使用到大量迴圈來做處理，但在 R 程式中直接使用迴圈會降低程式執行的效率，
 #####   lapply
     1. lapply ( list_name, func ): simplify for loop，針對list裡面的每個 element 執行後面的動作, output = list
     2. unlist ( ) # print without list format
