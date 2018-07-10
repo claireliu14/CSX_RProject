@@ -1,0 +1,134 @@
+---
+title: "DataCamp - Intermediate R"
+author: "Claire Liu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Learn with DataCamp
+
+> 第一週的回家進度是了解R語言的基礎操作，初次接觸R，覺得它和python很類似    
+> [DataCamp](https://www.datacamp.com/home) 這個網頁有基本的語法可以練習，接下來的內容為 [Intermediate R](https://www.datacamp.com/courses/intermediate-r) 的練習筆記。
+
+### Conditionals and Control Flow
+
+  * Relational Operators ==, !=, <=, <, >, >= ，可以用來比較的項目有 numeric、character、logical、vectors、matrix
+  * Logical Operators: and &, or |, reverse !, &&, ||
+  * Contitional Statements: if ( condition ) { expr1 } else if ( condition ) { expr2 } else { expr3 }
+  
+```{r conditional and control flow, echo=TRUE, eval=TRUE}
+# Comparison of numerics: it return FALSE because the LHS is -28, the RHS is -9
+-6 * 5 + 2 >= -10 + 1
+
+# Comparison of character strings: it return FALSE because 'd' is greater than 'C' in ASCII
+"dog" <= "Cats"
+
+# Comparison of logicals: TRUE = 1, FALSE = 0
+TRUE > FALSE
+
+# Comparison of vectors: LinkedIn more popular than Facebook
+linkedin <- c(16, 9, 13, 5, 2, 17, 14)
+facebook <- c(17, 7, 5, 16, 8, 13, 14)
+linkedin > facebook
+
+# linkedin exceeds 10 but facebook below 10
+linkedin > 10 & facebook < 10
+
+# When were one or both visited at least 12 times?
+linkedin >= 12 | facebook >= 12
+
+# Control Flow Example: 
+sum_fb <- sum(facebook)
+sum_li <- sum(linkedin)
+if(sum_li > sum_fb) {
+  print(paste("linkedin (", sum_li,") is more popular than facebook (", sum_fb, ")."))
+} else if (sum_li < sum_fb) {
+  print(paste("facebook (", sum_fb,") is more popular than linkedin (", sum_li, ")."))
+} else {
+  print(paste("linkedin (", sum_li,") is as popular as facebook (", sum_fb, ")."))
+}
+```
+
+
+### Loops
+  * while loop: while ( condition ) { expr ( break ) }
+  * for loop: 
+    1. for ( var in seq ) { expr  ( break ) } 可用在vector, matrix, list
+	  2. for ( i in 1:n ) -> n may be length ( vector ) 可以像陣列一般存取
+  * next: 類似 continue 的用法
+  
+```{r loops, echo=TRUE, eval=TRUE}
+
+```
+
+### Functions
+
+  * help ( function_name ) or ?function_name: 查看 Document 了解函式功能、參數與用法
+  * args ( function_name ): 查看函式參數
+	* Writing function:
+		1. func_name <- function ( arg1 = defualt_value, arg2 = defualt_value ) { body  ( return() ) }
+		2. ls() : list all the functions that I create
+		3. function scope only in function     
+     
+  * R packages
+    1. install.packages( “package_name” )
+    2. search(): view all package in this file
+    3. library(“package_name”): load package, and then attach to search list
+    4. require()
+
+```{r function, echo=TRUE, eval=TRUE}
+
+```
+
+### The apply family
+#####   lapply
+    1. lapply ( list_name, func ): simplify for loop，針對list裡面的每個 element 執行後面的動作, output = list
+    2. unlist ( ) # print without list format
+    3. anonymous function: no function name call at second parameter: lapply ( x, function(y) { } )    
+
+#####  sapply 
+    1. simplify list to array
+    2. sapply ( list_name, func, USE.NAMES = FALSE ): USE.NAMES = TRUE by default
+
+#####  vapply
+    1. explicitly specify output format  
+    
+```{r apply, echo=TRUE, eval=TRUE}
+
+```
+
+### Utilities
+#####   Useful Functions
+    - mathematical: sum, mean, abs ... round 四捨五入
+    - data structure: sort, rep, seq
+      1. seq ( 1, 10, by = 3 )
+      2. rep ( c ( … ), times, each )
+      3. sort ( c ( … ), decreasing = TRUE )
+      4. is.*()
+      5. as.*() 轉成特定class
+      6. append () 
+      7. rev () # reverse     
+
+#####   Regular Expressions
+    1. grepl ( pattern = <regex>, x = <string> ) # strings是否包含pattern   
+        - pattern = “^a” # 開頭是a
+        - pattern = “a$” # 結尾是a    
+    2. grep () # 回傳index = which ( grepl ( … ) )
+    3. sub ( pattern = <regex>, replacement = <str>, x = <str> ) # 取代，取代一個
+    4. gsub # 全部都會取代，pattern 可以用 | 指定多個
+
+	 .* which matches any character (.) zero or more times (*).
+	 \\ 後面接的是必要元素
+	 \\s: Match a space. 
+	 [0-9]+: Match the numbers 0 to 9, at least once (+).
+
+  更多正規表示式可以參考[此網站](https://blog.yjtseng.info/post/regexpr/)
+
+#####   Times and Dates
+    1. Sys.Date () # 系統日期，class = Date，加一代表日期 +1
+    2. Sys.time () 	#系統日期與時間，class = POSIXct, POSIXt，加一代表秒數 +1
+    3. as.Date ( … , format = “%Y-%d-%m” )  可以將character 轉為 Date , or as.POSIXct
+    4. unclass(date) # 計算與 1970/1/1 差距幾天
