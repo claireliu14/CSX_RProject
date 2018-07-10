@@ -1,0 +1,81 @@
+---
+title: "DataCamp - Introduction to the Tidyverse"
+author: "Claire Liu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Learn with DataCamp
+
+> 第一週的回家進度是了解R語言的基礎操作，初次接觸R，覺得它和python很類似    
+> [DataCamp](https://www.datacamp.com/home) 這個網頁有基本的語法可以練習，接下來的內容為 [Introduction to the Tidyverse](https://www.datacamp.com/courses/introduction-to-the-tidyverse) 的練習筆記。
+
+### Data wrangling
+  * filter: 針對資料欄位下條件進行過濾
+  * arrange: 排序資料
+  * mutate: 修改原本的資料欄位或新建新的欄位
+  
+```{r }
+# Require install: gapminder, tidyverse, and dplyr
+# Load the gapminder and dplyr package
+library(gapminder)
+library(dplyr)
+
+# this is what we need to operate
+gapminder
+
+gapminder %>% 
+  filter(year == 1957) %>%
+  arrange(desc(pop)) %>%
+  mutate(lifeExpMonth = lifeExp * 12)
+
+```
+
+### Data visualization
+  * ggplot(data, aes(x, y, color, size))：建立圖表
+  * geom_point() : 在圖上顯示資料點
+  * scale_x_log10() / scale_y_log10() 
+  * facet_wrap(~)： 以不同 nomianl 的資料來呈現 eg. 用 " 年 " 看到變化
+  
+```{r visualization}
+# Load the ggplot2 package
+library(ggplot2)
+
+# Scatter plot comparing gdpPercap and lifeExp, with color representing continent
+# and size representing population, faceted by year
+ggplot(gapminder, aes(x=gdpPercap, y=lifeExp, color=continent, size=pop)) +
+  geom_point() + 
+  scale_x_log10() + 
+  facet_wrap(~ year)
+```
+
+### Grouping and summarizing
+  * summarize: 為摘要、匯總的概念
+  * group by: 可將 nominal 的資料視為一個群組 eg. 年、性別、項目等，必須在 summarize 之前使用
+  * expand_limits(): 為圖表加上額外的設定 eg. 座標軸由 0 開始等
+  
+```{r group and summarize}
+# Summarize medianGdpPercap within each continent within each year: by_year_continent
+by_year_continent <- gapminder %>%
+  group_by(continent, year) %>%
+  summarize(medianGdpPercap = median(gdpPercap))
+
+# Plot the change in medianGdpPercap in each continent over time
+ggplot(by_year_continent, aes(x=year, y=medianGdpPercap, color=continent)) + geom_point() + expand_limits(y=0)
+```
+
+### Types of visualizations
+這部分在講述資料視覺化的方式有很多種，選擇適合這個資料的呈現方式，根據想要傳達的訊息來選擇是很重要的。  
+
+  * Line Plot: geom_line ()
+  * Bar Plot: geom_col ()
+  * Histograms: geom_histogram ( binwidth ) # aes 不需要設定 y
+  * Boxplots: geom_boxplot ()
+  * ggtitle (): 為圖表加上標題
+
+### Reference
+* 第 15 章：資料處理技巧（2）<http://www.learn-r-the-easy-way.tw/chapters/16>
+* Tidyverse：R 語言學習之旅的新起點 <https://medium.com/datainpoint/tidyverse-r-語言學習之旅的新起點-3b01ca6a348c>
