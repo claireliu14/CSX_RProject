@@ -1,0 +1,124 @@
+---
+title: "Data Visualization - ggplot2"
+author: "Claire Liu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r AirPassengers}
+# load ggplot2 and dplyr package
+library(ggplot2)
+library(dplyr)
+
+# Monthly Airline Passenger Numbers 1949-1960
+AirPassengers
+
+# This is a "ts" class data
+class(AirPassengers)
+
+# transform ts class to data.frame
+airpassengers_df <- data.frame(year = c(floor(time(AirPassengers) + .01)),
+                               month = c(cycle(AirPassengers)),
+                               data = c(AirPassengers))
+head(airpassengers_df)
+
+# draw plot
+ggplot(airpassengers_df, aes(x=month, y=data)) + geom_line() + facet_wrap(~ year)
+```
+
+```{r txhousing}
+# Information about the housing market in Texas provided by the TAMU real estate center
+txhousing
+
+# the class of txhousing
+class(txhousing)
+
+# structure about txhousing
+str(txhousing)
+```
+
+### 單變數：連續型
+
+```{r}
+ggplot(data = txhousing, aes(x = median)) + geom_histogram()
+```
+
+### 雙變數：連續 vs 連續
+```{r txhousing conti vs inconti}
+ggplot(txhousing, aes(x=sales, y=median)) + geom_point()
+```
+
+
+### 雙變數：離散 vs 連續
+
+```{r txhousing single variable}
+mData <- txhousing %>%
+  filter(year == 2000) %>%
+  group_by(city) %>%
+  summarize(totalSales = sum(sales, na.rm=TRUE)) %>%
+  filter(totalSales >= 10000)
+
+mData
+ggplot(mData, aes(x=reorder(city, -totalSales), y=totalSales)) + geom_bar(stat = "identity")
+```
+
+```{r WorldPhones}
+# The number of telephones in various regions of the world (in thousands).
+WorldPhones
+
+# WorldPhones is a "matrix"
+class(WorldPhones)
+
+# convert matrix to data.frame and renaming
+worldphone_df <- as.data.frame(as.table(WorldPhones))
+names(worldphone_df) <- c("year", "area", "freq")
+head(worldphone_df)
+
+# draw plot
+ggplot(worldphone_df, aes(x=year, y=freq, color=area, group=area)) + geom_line() + geom_point()
+```
+
+### 多變量
+
+```{r}
+library(GGally) # install.packages("GGally")
+library(scales)
+library(memisc) # install.packages("memisc")
+```
+
+### ggmap
+
+```{r}
+library(maps)
+data(us.cities)
+
+# collect all the city name in txhousing
+mycountry <- unique(txhousing$city)
+
+# beacause the us.cities$name is end in "TX", so we need to cut it off
+tx.cities <- subset(us.cities, country.etc == "TX")
+tx.cities$city <- unlist(strsplit(tx.cities$name, " TX"))
+
+# for use rep to map the lat and long data conveniently, we choose only one year
+m.txhousing <- subset(txhousing, year == 2000 & city %in% tx.cities$city)
+
+# there are 12 months data in 2000, so set each = 12
+temp <- tx.cities[tx.cities$city %in% m.txhousing$city, c("lat", "long")]
+temp <- temp[rep(seq_len(nrow(temp)), each = 12), ]
+m.txhousing.geo <- cbind(m.txhousing, temp)
+
+ggplot(m.txhousing.geo, aes(x = long, y = lat, size = sales, colour = cut(median, 5))) +
+  borders("county", "texas", colour = "grey70") + 
+  geom_point(shape=1, stroke = 1.1) + facet_wrap(~month)
+```
+
+
+### Reference
+* time series in ggplot2 <https://plot.ly/ggplot2/time-series/>
+* Create dataframe from a matrix <https://stackoverflow.com/questions/15885111/create-dataframe-from-a-matrix>
+* Documentation for package ‘datasets’ version 3.6.0 <https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/00Index.html>
+* A (very) brief introduction to ggplot2 <http://jcyhong.github.io/ggplot_demo.html>
