@@ -88,37 +88,20 @@ ggplot(worldphone_df, aes(x=year, y=freq, color=area, group=area)) + geom_line()
 library(GGally) # install.packages("GGally")
 library(scales)
 library(memisc) # install.packages("memisc")
+
+set.seed(20022012)
+
+# Column 'city' has more levels (46) than the threshold (15) allowed, so we removed it.
+txhousing.samp <- subset(txhousing, select = -c(year,city))
+
+# sample : 從資料中取樣幾筆
+txhousing.samp <- txhousing.samp[sample(1:length(txhousing$sales), 8000), ]
+ggpairs(txhousing.samp,
+        lower = list(continuous = wrap("points", shape = I('.'))),
+        upper = list(combo = wrap("box", outlier.shape = I('.'))))
 ```
-
-### ggmap
-
-```{r}
-library(maps)
-data(us.cities)
-
-# collect all the city name in txhousing
-mycountry <- unique(txhousing$city)
-
-# beacause the us.cities$name is end in "TX", so we need to cut it off
-tx.cities <- subset(us.cities, country.etc == "TX")
-tx.cities$city <- unlist(strsplit(tx.cities$name, " TX"))
-
-# for use rep to map the lat and long data conveniently, we choose only one year
-m.txhousing <- subset(txhousing, year == 2000 & city %in% tx.cities$city)
-
-# there are 12 months data in 2000, so set each = 12
-temp <- tx.cities[tx.cities$city %in% m.txhousing$city, c("lat", "long")]
-temp <- temp[rep(seq_len(nrow(temp)), each = 12), ]
-m.txhousing.geo <- cbind(m.txhousing, temp)
-
-ggplot(m.txhousing.geo, aes(x = long, y = lat, size = sales, colour = cut(median, 5))) +
-  borders("county", "texas", colour = "grey70") + 
-  geom_point(shape=1, stroke = 1.1) + facet_wrap(~month)
-```
-
 
 ### Reference
 * time series in ggplot2 <https://plot.ly/ggplot2/time-series/>
 * Create dataframe from a matrix <https://stackoverflow.com/questions/15885111/create-dataframe-from-a-matrix>
 * Documentation for package ‘datasets’ version 3.6.0 <https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/00Index.html>
-* A (very) brief introduction to ggplot2 <http://jcyhong.github.io/ggplot_demo.html>
