@@ -1,0 +1,98 @@
+---
+title: "map"
+author: "Claire Liu"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+地圖概觀：     
+* x 軸是經度 ( Longitude ) ，y 軸是緯度 ( Latitude )
+
+#### get_map() parameters
+* location：控制地圖的位置，可以是地名，也可以是經緯度座標 c( lon, lat )
+* zoom：放大倍率，可以控制地圖顯示的大小
+* language：地圖上顯示的語言
+* maptype：指定地圖的類型，預設為 terrain
+    1. roadmap: 就是 google map 上可以看到的樣子
+    2. satellite: 
+    3. hybrid
+    4. toner-lite
+  
+#### ggmap() parameters
+* darken：設定地圖的明暗度，實際上是在地圖上再疊一個圖層，用顏色和透明度做變化
+
+```{r}
+# install.packages("ggmap")
+# 如果安裝過程中遇到無法安裝png, jpeg 等問題 (macOS) 
+# 請在terminal 執行 brew link libpng 和 brew link libjpeg，重試安裝
+library(ggmap)
+library(mapproj)
+map <- get_map(location = '台北市', zoom = 11, maptype = "roadmap")
+ggmap(map)
+```
+
+
+#### ggplot2 的地圖
+下面的範例利用前面練習 Data Visualization 的資料進行延伸，
+
+```{r}
+library(maps)
+
+# us.cities 包含 us 所有的country name, etc, population, lat, lon, capital
+# 因為 txhousing 沒有經緯度資訊，所要利用 us.cities 找出 lat and lon
+data(us.cities)
+
+# Preprocessing
+# collect all the city name in txhousing
+mycountry <- unique(txhousing$city)
+
+# beacause the us.cities$name is end in "TX", so we need to cut it off
+tx.cities <- subset(us.cities, country.etc == "TX")
+tx.cities$city <- unlist(strsplit(tx.cities$name, " TX"))
+
+# for use rep to map the lat and long data conveniently, we choose only one year
+m.txhousing <- subset(txhousing, year == 2000 & city %in% tx.cities$city)
+
+# there are 12 months data in 2000, so set each = 12
+temp <- tx.cities[tx.cities$city %in% m.txhousing$city, c("lat", "long")]
+temp <- temp[rep(seq_len(nrow(temp)), each = 12), ]
+m.txhousing.geo <- cbind(m.txhousing, temp)
+
+# print data
+head(m.txhousing.geo)
+```
+
+```{r ggplot}
+# draw plot
+ggplot(m.txhousing.geo, aes(x = long, y = lat, size = sales, colour = cut(median, 5))) + # 設定ggplot圖資
+  borders("county", "texas", colour = "grey70") + # 設定圖在德州，用county區分
+  geom_point(alpha=.5) + # 顯示圖上的資料點
+  facet_wrap(~month) +   # 區分出不同 month 的資料
+  ggtitle("Housing market for populous cities in Texas (2000)") + # set plot title
+  scale_colour_discrete(name  = "Median price") + # 設定不同顏色資料點的意義
+  scale_size_continuous(name  = "Number of Sales") # 設定不同大小資料的意義
+```
+
+
+以下練習用 ggmap 結合 txhousing 的資料
+```{r ggmap}
+tx_center = as.numeric(geocode("Texas"))
+
+# 設定 ggmap
+txMap = ggmap(get_googlemap(center=tx_center, scale=2, zoom=6), extent="normal") 
+tx.cities.all <- subset(us.cities, country.etc == "TX")
+
+# ggmapp 和 ggplot2 結合使用，可以在實體地圖上顯示資料
+txMap + geom_point(aes(x=long, y=lat, size = pop), col = "orange", 
+                   data = tx.cities.all, alpha=0.4) +
+  ggtitle("Population of Texas cities")
+```
+
+
+#### Reference    
+* A (very) brief introduction to ggplot2 <http://jcyhong.github.io/ggplot_demo.html>    
+* R 的 ggmap 套件：繪製地圖與資料分佈圖，空間資料視覺化 <https://blog.gtwang.org/r/r-ggmap-package-spatial-data-visualization/3/>
