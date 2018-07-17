@@ -1,39 +1,11 @@
----
-title: "Word Cloud"
-author: "Claire Liu"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-### PPT Word cloud
-
-#### 網路爬蟲
-* 要試著抓取 [PTT WomenTalk](https://www.ptt.cc/bbs/WomenTalk/index.html) 版上的文章內容
-* 將網頁上的內容抓下來需要執行時間
-
-```{r ptt}
-# 取用老師的 api: pttTestFunction.R，
-# install.packages("tmcn")
 source('pttTestFunction.R')
 
-if(!file.exists("10.txt")) {
 id = c(1:10)
 URL = paste0("https://www.ptt.cc/bbs/WomenTalk/index", id, ".html")  # paste預設會有空格，paste0則沒有
 filename = paste0(id, ".txt")
 pttTestFunction(URL[1], filename[1])
 mapply(pttTestFunction, URL = URL, filename = filename)
-}
-```
 
-
-#### 文本清理
-* 這部分應該是爬蟲之後最耗時的工作，處理越好，文字雲的內容會越有參考價值
-* 避開一些口語、符號、特定網站上會出現的詞彙，避免他們出現在文字雲上
-
-```{r}
 rm(list=ls(all.names = TRUE))
 library(NLP)        # install.packages("NLP")
 library(tm)         # install.packages("tm")
@@ -45,7 +17,6 @@ library(wordcloud)  #install.packages("wordcloud")
 filenames <- list.files(getwd(), pattern="*.txt")
 files <- lapply(filenames, readLines)
 docs <- Corpus(VectorSource(files))
-#移除可能有問題的符號
 toSpace <- content_transformer(function(x, pattern) {
   return (gsub(pattern, " ", x))
 }
@@ -64,16 +35,12 @@ docs <- tm_map(docs, toSpace, "作者")
 docs <- tm_map(docs, toSpace, "發信站")
 docs <- tm_map(docs, toSpace, "批踢踢實業坊")
 docs <- tm_map(docs, toSpace, "[a-zA-Z]")
-#移除標點符號 (punctuation)
-#移除數字 (digits)、空白 (white space)
 docs <- tm_map(docs, removePunctuation)
 docs <- tm_map(docs, removeNumbers)
 docs <- tm_map(docs, stripWhitespace)
 docs
-```
 
-#### 詞頻矩陣
-```{r}
+
 mixseg = worker()
 jieba_tokenizer=function(d){
   unlist(segment(d[[1]],mixseg))
@@ -83,10 +50,8 @@ freqFrame = as.data.frame(table(unlist(seg)))
 freqFrame = freqFrame[order(freqFrame$Freq,decreasing=TRUE), ]
 library(knitr)
 kable(head(freqFrame, 10), format = "markdown")
-```
 
-```{r}
-# mac 的使用者要加上這行，避免文字出不來的問題
+
 par(family=("Heiti TC Light"))
 wordcloud(freqFrame$Var1,freqFrame$Freq,
           scale=c(5,0.1),min.freq=50,max.words=150,
@@ -94,13 +59,8 @@ wordcloud(freqFrame$Var1,freqFrame$Freq,
           rot.per=.1, colors=brewer.pal(8, "Dark2"),
           ordered.colors=FALSE,use.r.layout=FALSE,
           fixed.asp=TRUE)
-```
 
-
-#### PPT gossiping session
-
-```{r ptt gossiping}
-library(stringr) # 字串處理
+library(stringr)
 ptt.url <- "https://www.ptt.cc"
 gossiping.url <- str_c(ptt.url, "/bbs/Gossiping") 
 gossiping.url
@@ -119,10 +79,3 @@ gossiping <- submit_form(
   submit = "yes"
 ) 
 gossiping
-```
-
-#### References
-* TextMining by Pecu <https://ntu-csx-datascience.github.io/106Summer/week2/textMining.html>
-* R 軟體爬蟲和文字斷詞 <http://biostat.tmu.edu.tw/enews/ep_download/21rb.pdf>
-
-
