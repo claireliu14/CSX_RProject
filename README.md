@@ -14,4 +14,11 @@
     2. DataCamp - Intermediate R: [hw01-2](https://yuly830914.github.io/CSX_RProject/week_01/hw01-2.html)
     3. DataCamp - Introduction to the Tidyverse: [hw01-3](https://yuly830914.github.io/CSX_RProject/week_01/hw01-3.html)
 
-### Week 02
+### Week 02 - 07/11
+* In Class
+    1. Data Visualization by ggplot2
+    2. Word Cloud
+    
+* At Home
+    1. DataCamp - Exploratory data analysis
+    2. Map ( ggmap ) : [hw02_4](https://yuly830914.github.io/CSX_RProject/week_02/hw02-4.html)
