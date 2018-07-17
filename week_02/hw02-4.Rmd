@@ -9,11 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-地圖概觀：     
-  * x 軸是經度 ( Longitude ) ，y 軸是緯度 ( Latitude )
-
 #### get_map() parameters
-* location：控制地圖的位置，可以是地名，也可以是經緯度座標 c( lon, lat )
+* location：控制地圖的位置，可以是地名，也可以是經緯度座標 c( lon, lat ) -- x 軸是經度 ( Longitude ) ，y 軸是緯度 ( Latitude )
 * zoom：放大倍率，可以控制地圖顯示的大小
 * language：地圖上顯示的語言
 * maptype：指定地圖的類型，預設為 terrain
@@ -79,8 +76,8 @@ ggplot(m.txhousing.geo, aes(x = long, y = lat, size = sales, colour = cut(median
 
 
 #### ggmap + ggplot2
-以下練習用 ggmap 結合 txhousing 的資料   
-  * geocode: 可用來取得特定地區的經緯度資料，但免費版本僅限 2,500 次轉換
+以下練習用 ggmap 結合 txhousing 的資料：
+* geocode: 可用來取得特定地區的經緯度資料，但免費版本僅限每日 2,500 次轉換
 
 ```{r ggmap}
 # get Texas's lat and lon
