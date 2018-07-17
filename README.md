@@ -16,8 +16,8 @@
 
 ### Week 02 - 07/11
 * In Class
-    1. Data Visualization by ggplot2: [hw02-1](https://yuly830914.github.io/CSX_RProject/week_01/hw02-1.html)
-    2. Word Cloud: [hw02-2](https://yuly830914.github.io/CSX_RProject/week_01/hw02-2.html)
+    1. Data Visualization by ggplot2: [hw02-1](https://yuly830914.github.io/CSX_RProject/week_02/hw02-1.html)
+    2. Word Cloud: [hw02-2](https://yuly830914.github.io/CSX_RProject/week_02/hw02-2.html)
     
 * At Home
     1. DataCamp - Exploratory data analysis
