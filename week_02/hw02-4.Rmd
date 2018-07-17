@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 地圖概觀：     
-* x 軸是經度 ( Longitude ) ，y 軸是緯度 ( Latitude )
+  * x 軸是經度 ( Longitude ) ，y 軸是緯度 ( Latitude )
 
 #### get_map() parameters
 * location：控制地圖的位置，可以是地名，也可以是經緯度座標 c( lon, lat )
@@ -78,12 +78,18 @@ ggplot(m.txhousing.geo, aes(x = long, y = lat, size = sales, colour = cut(median
 ```
 
 
-以下練習用 ggmap 結合 txhousing 的資料
+#### ggmap + ggplot2
+以下練習用 ggmap 結合 txhousing 的資料   
+  * geocode: 可用來取得特定地區的經緯度資料，但免費版本僅限 2,500 次轉換
+
 ```{r ggmap}
-tx_center = as.numeric(geocode("Texas"))
+# get Texas's lat and lon
+tx_center <- as.numeric(geocode("Texas"))
 
 # 設定 ggmap
-txMap = ggmap(get_googlemap(center=tx_center, scale=2, zoom=6), extent="normal") 
+txMap <- ggmap(get_map(location = tx_center, zoom=6), extent="normal")
+
+# 設定資料集，取得 Texas 的所有區塊
 tx.cities.all <- subset(us.cities, country.etc == "TX")
 
 # ggmapp 和 ggplot2 結合使用，可以在實體地圖上顯示資料
@@ -93,6 +99,6 @@ txMap + geom_point(aes(x=long, y=lat, size = pop), col = "orange",
 ```
 
 
-#### Reference    
-* A (very) brief introduction to ggplot2 <http://jcyhong.github.io/ggplot_demo.html>    
-* R 的 ggmap 套件：繪製地圖與資料分佈圖，空間資料視覺化 <https://blog.gtwang.org/r/r-ggmap-package-spatial-data-visualization/3/>
+#### References    
+  * A (very) brief introduction to ggplot2 <http://jcyhong.github.io/ggplot_demo.html>    
+  * R 的 ggmap 套件：繪製地圖與資料分佈圖，空間資料視覺化 <https://blog.gtwang.org/r/r-ggmap-package-spatial-data-visualization/3/>
