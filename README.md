@@ -22,3 +22,16 @@
 * At Home
     1. DataCamp - Exploratory data analysis
     2. Map ( ggmap ) : [hw02-4](https://yuly830914.github.io/CSX_RProject/week_02/hw02-4.html)
+    
+### Week 03 - 07/18
+* In Class
+    1. Learn with EDA
+    2. Learn with Text mining tool (TF-IDF, PCA, K-means)
+    
+* At Home
+    1. EDA report: [hw03-1](https://yuly830914.github.io/CSX_RProject/week_03/hw03-1.html) and please download data files in [here](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
+    2. Text Mining
+    
+### Week 04
+    
+    
