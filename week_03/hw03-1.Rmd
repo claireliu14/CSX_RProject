@@ -1,0 +1,333 @@
+---
+title: "Report of Instacart Market Basket Analysis"
+author: "Claire Liu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+        
+### Pick Dataset
+> This Dataset is from [Instacart Market Basket Analysis](https://www.kaggle.com/c/instacart-market-basket-analysis) for Featured Prediction Competition on [Kaggle](https://www.kaggle.com/).    
+> 在 [Exploratory Analysis - Instacart](https://www.kaggle.com/philippsp/exploratory-analysis-instacart) 是主辦方提供的文件，內容是針對這份資料集做的簡易 EDA
+
+### Overview  
+
+#### Read in the data
+從 Kaggle download 的 dataset 存在 all 資料夾底下，共有七個檔案：   
+
+* aisles.csv: 商場走道分類    
+* departments.csv: 部門資料    
+* orders.csv: 訂單被分類為 prior, train, test，這份資料包含一筆訂單是屬於哪一類，其中 order_dow 是星期   
+* order_products__prior.csv: 包含所有 prior 訂單，每筆訂單包含的產品，其中 reordered 欄位表示該產品是否出現在該客戶上次的訂單中    
+* order_products__train.csv: 包含所有 train 訂單，每筆訂單包含的產品    
+* products.csv: 所有商品項目   
+* sample_submission.csv   
+  
+```{r message=FALSE, warning=FALSE, results='hide'}
+# Those are all the libraries in need.
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(stringr) # 處理文字
+library(scales)
+#library(DT)
+
+orders <- read.csv('all/orders.csv')
+products <- read.csv('all/products.csv')
+order_products_train <- read.csv('all/order_products__train.csv')
+order_products_prior <- read.csv('all/order_products__prior.csv')
+aisles <- read.csv('all/aisles.csv')
+departments <- read.csv('all/departments.csv')
+```
+
+
+#### Peek at the dataset
+
+讀完資料可以瀏覽一下資料，確認是否有抓到、它的格式、內容等，也可以參考 [網頁上的內容](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
+
+```{r}
+kable(head(orders, 12))
+```
+
+然後可以開始畫一些圖表來了解資料    
+
+##### Hour of Day
+
+每天早上九點到晚上五點是最多訂單的時段
+
+```{r results='asis'}
+orders %>% 
+  ggplot(aes(x=order_hour_of_day)) + 
+  geom_bar() + ggtitle("Hourly order status")
+```
+
+##### Day of Week
+
+雖然星期是用數字備註，而且有 0，但我們可以推測最多訂單 0 和 1 屬於 weekend
+
+```{r}
+orders %>% 
+  ggplot(aes(x=order_dow)) + 
+  geom_bar() + ggtitle("Order status for different weeks")
+```
+
+##### When do they order again ?
+
+消費頻率大約隔一週或一個月
+
+```{r}
+orders %>% 
+  ggplot(aes(x=days_since_prior_order)) + 
+  geom_bar() + ggtitle("How long do the customers order again")
+```
+
+##### How many prior orders are there ?
+
+這個圖表的意義在於利用 orders 裡面的 order_number（ 它沒有特別註明，但應該是第幾次下單的意思 ）    
+來了解客戶的下單狀況，圖中 order_number 1 - 3 的資料點是平行的，可以說明有重複購買記錄的消費者，至少下單三次    
+
+```{r}
+orders %>% 
+  filter(eval_set=="prior") %>%
+  count(order_number) %>%
+  ggplot(aes(x=order_number, y=n)) + 
+  geom_line() + geom_point() + ggtitle("How many prior orders")
+```
+
+
+##### How many items do people buy?
+
+為了瞭解客戶的購物車都有多少 item，利用加入購物車的順序（ add_to_cart_order ），取每筆訂單（ gourp_by ）最後一個數字（ last ）或是取最大（ max ）的數字。根據結果，可以觀察大部分的訂單有五項商品。
+
+```{r message=FALSE, warning=FALSE}
+order_products_prior %>% 
+  group_by(order_id) %>% 
+  summarize(n_items = max(add_to_cart_order)) %>%
+  ggplot(aes(x=n_items)) +
+  geom_histogram(stat = "count") +
+  coord_cartesian(xlim = c(0:80))
+```
+
+##### Bestsellers
+
+取得銷售最好的前十樣商品，必須統計每個 product 的購買次數（ group_by and summarize count ），而這些資料分別建立在不同的檔案中，需要透過相同的 product_id 來對應，在這裡用到了類似關連式資料庫的操作（ [left_join](http://r3dmaotech.blogspot.com/2016/09/r-data-frame-merge-join.html) ），將 products 中才有名稱對應到數量最多的前十筆（ top_n ）。根據結果是「香蕉」。
+
+* n(): 當前 group 的觀察量，只能用在 summarise, mutate and filter 上    
+* top_n(): 根據 wt 選出前 n 筆資料。    
+* theme(): axis.text.x 設定 x 軸的文字，旋轉 90 度，水平對齊 in [0:1]；取消 x 軸的座標標題 axis.title.x     
+
+```{r}
+order_products_train %>% 
+  group_by(product_id) %>% 
+  summarize(count = n()) %>% 
+  top_n(10, wt = count) %>%
+  left_join(select(products,product_id,product_name),by="product_id") %>%
+  arrange(desc(count)) %>%
+  ggplot(aes(x=reorder(product_name,-count), y=count)) +
+  geom_bar(stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())
+```
+
+##### How often do people order the same items again?
+
+客戶對產品的回購率是很重要的參考依據，下面的範例說明了將近 60% 的商品是重新訂購的。我們只需要用 reordered 的欄位，計算它在所有訂購商品的比例便可以知道。原文的做法是將圖表用長條圖展現，而這裡改成圓餅圖，嘗試不一樣的表現方式。
+
+* reordered as.factor 是避免 0 和 1 的資料被視為數字，以連續的方式顯示     
+* proportion: 設定 reordered 和 not reordered 的比例    
+* coord_polar: 將 bar plot 轉成圓餅圖    
+* geom_text: 在圖上適當的位置標上數據資料。[[參考資料](https://stackoverflow.com/questions/8952077/pie-plot-getting-its-text-on-top-of-each-other)]   
+
+```{r}
+order_products_train %>%
+  group_by(reordered) %>%
+  summarise(count = n()) %>%
+  mutate(reordered = as.factor(reordered)) %>%
+  mutate(proportion = count/sum(count)) %>%
+  ggplot(aes(x=0, y=proportion, fill=reordered)) +
+  geom_bar(stat="identity") +
+  coord_polar("y", start=0) +
+  theme(axis.text.y=element_blank(), axis.title.y = element_blank(), axis.ticks.y=element_blank()) +
+  geom_text(aes(y = proportion/2 + c(0, cumsum(proportion)[-length(proportion)]), label = percent(proportion)), size=5)
+```
+
+
+##### Most often reordered
+
+近一步觀察什麼商品是最常被重複訂購的前十項商品。對象是所有商品，所以將 product_id 做 group，再取得每項商品被 reordered 的次數比是多少，在這裡比較特別的是用了 filter 過濾 n 大於 40 的資料（ 根據原文的數據，用 summary 的結果，推測應該是根據 mean(n) = 35.39 去設定 ），篩選掉樣本過少的結果。
+
+```{r}
+tmp <- order_products_train %>% 
+  group_by(product_id) %>%
+  summarize(proportion_reordered = mean(reordered), n=n())
+summary(tmp$n)
+
+order_products_train %>% 
+  group_by(product_id) %>%
+  summarize(proportion_reordered = mean(reordered), n=n()) %>%
+  filter(n>mean(n)) %>%
+  top_n(10, wt=proportion_reordered) %>% 
+  arrange(desc(proportion_reordered)) %>% 
+  left_join(products,by="product_id") %>%
+  ggplot(aes(x=reorder(product_name,-proportion_reordered), y=proportion_reordered))+
+  geom_bar(stat="identity")+
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank())+
+  coord_cartesian(ylim=c(0.85,0.95))
+```
+
+
+##### Which item do people put into the cart first?
+
+只要根據 add_to_cart_order 為 1 可以得到結果。pct 在計算特定物品在不同順序被拿取的比例，而如同上一個例子，filter 在這裡做了一個 count > 10 的篩選，數字來自 summary 的 mean，過濾掉影響結果的值。結果出來，通常第一個被放進購物車的是毛巾，還有一些應該是不需放冰箱的飲食商品。
+
+```{r}
+tmp <- order_products_train %>% 
+  group_by(product_id, add_to_cart_order) %>% 
+  summarize(count = n()) %>% 
+  mutate(pct=count/sum(count)) %>% 
+  filter(add_to_cart_order == 1)
+summary(tmp$count)
+
+order_products_train %>% 
+  group_by(product_id, add_to_cart_order) %>% 
+  summarize(count = n()) %>% 
+  mutate(pct=count/sum(count)) %>% 
+  filter(add_to_cart_order == 1, count>10) %>% 
+  arrange(desc(pct)) %>% 
+  left_join(products,by="product_id") %>% 
+  ungroup() %>% 
+  top_n(10, wt=pct) %>%
+  ggplot(aes(x=reorder(product_name,-pct), y=pct))+
+  geom_bar(stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1),axis.title.x = element_blank()) +
+  coord_cartesian(ylim=c(0.4,0.7))
+```
+
+
+### Reproducing the Products by Hour Chart
+
+> 接下來的筆記內容原文來自於 [Recreating the Products by Hour Chart by Chippy ](https://www.kaggle.com/nigelcarpenter/recreating-the-products-by-hour-chart)
+> 他成功複製了 [3 Million Instacart Orders, Open Sourced](https://tech.instacart.com/3-million-instacart-orders-open-sourced-d40d29ead6f2)的圖表
+
+前兩步驟是載入 library 和 load data，這部分前面都做過了，原文在載入資料的時候是使用 fread，將資料讀為 data.table，參考 [這裡](https://stackoverflow.com/questions/20345022/convert-a-data-frame-to-a-data-table-without-copy)。
+
+```{r}
+# setDT: 將 data.frame 轉為 data.table, setDF 將 data.table 轉為 data.frame
+setDT(orders)
+setDT(order_products_prior)
+setDT(products)
+setDT(order_products_train)
+order_products <- rbind(order_products_prior, order_products_train)
+```
+
+##### Join to get user_id and order_number
+
+將 orders 的資料 append 到 order_products 上，使用 left_join 根據 order_products 附加，如果沒有的 order_id 會填入 NA。
+
+```{r}
+order_products <- order_products %>%
+  left_join(orders %>% select(order_id, user_id, order_number), by = "order_id")
+```
+
+##### Limit to just the top products
+
+原文中用到 tally，可用 summarise 替換。選出購買次數多的前 2000 筆資料。
+
+```{r}
+top_products <- order_products %>% 
+  group_by(product_id) %>% summarise(n=n()) %>% 
+  arrange(desc(n)) %>% slice(1:2000)
+```
+
+##### Compute hour of day distributions for these top products
+
+* 第一部分：inner_join 是兩個 table 都有相符合的 product_id 才會被篩選出來，只挑出 x 也就是 order_product 的欄位    
+* 第二部分：left_join 將 orders 的 order_hour_of_day append 到 order_products 上，用 transmute 刪除其他未被選擇的欄位    
+* 第三部分：在 mutate 之前，在計算不同商品在不同時間的購買量   
+* 第四部分：mutate 產生 pct，group 的目的是為了要計算 sum(n)  
+* 第五部分：left_join 將 product_name 對應到資料上
+
+```{r}
+top_distributions <- order_products %>%
+  inner_join(top_products %>% select(product_id), by = "product_id") %>%
+  left_join(orders %>% transmute(order_id,order_hour_of_day), by = "order_id") %>%
+  group_by(product_id, order_hour_of_day) %>%
+  tally() %>%
+  group_by(product_id) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup %>%
+  left_join(products %>% select(product_id, product_name), by = "product_id")
+```
+
+##### Comptue the mean hour each product was purchased in
+
+mean_hour 計算每項商品的平均購買時間，可以知道該產品在什麼時間最受歡迎。
+
+```{r}
+top_stats <- top_distributions %>%
+  group_by(product_id, product_name) %>%
+  summarize(mean_hour = sum(order_hour_of_day * n) / sum(n)) %>%
+  ungroup
+```
+
+##### Morning and late products & names
+
+用上面計算出的平均時間，取得該產品分佈在早上或下午。
+
+```{r}
+# use for pip
+library(magrittr)
+
+# limit to just this many products
+products_per_group <- 25
+
+morning <- top_stats %>% arrange(mean_hour) %>% slice(1:products_per_group)
+late <- top_stats %>% arrange(desc(mean_hour)) %>% slice(1:products_per_group)
+```
+
+##### Base plot
+
+畫出圖表。   
+
+* 選出早上和下午熱銷的產品，標注上 late or morning
+* segment 是中間的虛線
+
+```{r}
+plt_base <- top_distributions %>%
+  filter(product_id %in% c(morning$product_id, late$product_id)) %>%
+  mutate(hour_group = ifelse(product_id %in% morning$product_id, "morning", "late")) %>%
+  ggplot(aes(x=order_hour_of_day, y=pct, group = product_name, colour = hour_group)) +
+  annotate("segment", x = 12, y = 0, xend = 12, yend = 15, alpha = .2, linetype = 2) +
+  geom_line(alpha = .3) +
+  labs(x = "Hour of Day Ordered", y = "Percent of Orders by Product") +
+  theme(legend.position = 'none') +
+  scale_colour_manual(values = c("red", "darkgreen")) +
+  theme(panel.background = element_blank()) +
+  scale_x_continuous(breaks = seq(0, 24, by = 2))
+```
+
+
+##### Final plot with annotations
+
+* annotate: 在圖表上加上文字說明，xy 代表位置，adj 控制靠左或靠右
+
+```{r}
+morning_names <- morning %$% paste(product_name, collapse = '\n')
+late_names <- late %$% paste(product_name, collapse = '\n')
+
+plt_final <- plt_base +
+  annotate("text", x = 1, y = 9, label = morning_names, adj=0, size = 2, colour = "darkgreen") +
+  annotate("text", x = 25, y = 9, label = late_names, adj=1, size = 2, colour = "darkred")
+
+plt_final
+```
+
+### References
+* 3 Million Instacart Orders, Open Sourced <https://tech.instacart.com/3-million-instacart-orders-open-sourced-d40d29ead6f2>
+* Cultural Diversity of Products/Purchases (updated) <https://www.kaggle.com/jhamilton415/cultural-diversity-of-products-purchases-updated/notebook>
+* Instacart Basket Hour of Day Visualization <https://gist.github.com/jeremystan/b3be353189dd0a8053e4a4b36991694a>
+
+
