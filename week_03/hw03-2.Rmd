@@ -1,0 +1,306 @@
+---
+title: "Text Mining"
+author: "Claire Liu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Preprocessing: Get Data 
+
+##### import libaries
+
+```{r}
+library(tidyverse)
+library(rvest)
+library(stringr)
+library(jiebaR)
+library(tm)
+library(tmcn)
+library(XML)
+library(httr)
+```
+
+##### get session
+
+* grepl: 比較字串吻合
+* html_session: 模擬網頁操作
+
+```{r}
+if(!dir.exists("./DATA")) {
+  # 合成 ptt 網址和看板
+  ptt.url <- "https://www.ptt.cc"
+  page.url <- str_c(ptt.url, "/bbs/WomenTalk")
+  page.session <- html_session(url = page.url)
+  
+  # 確認看板需不需要授權已滿 18 歲
+  if(grepl("ask", page.session$url)) 
+    {
+      page.form <- page.session %>% html_node("form") %>% html_form()
+      page <- submit_form( session = page.session, form = page.form, submit = "yes")
+    } else {
+      page <- page.session
+    }
+  
+  # 取得最新的頁數
+  page.latest <- page %>%
+    html_nodes("a") %>% html_attr("href") %>%
+    str_subset("index[0-9]{2,}\\.html") %>% str_extract("[0-9]+") %>% as.numeric()
+  
+  page.latest
+}
+```
+
+##### Get hyperlinks to all articles
+
+* link: 是所有頁面的超連結
+* links.article: 是所有所有頁面上的文章的超連結
+
+```{r}
+if(!dir.exists("./DATA")) {
+  links.article <- NULL
+  page.length <- 10
+  for (page.index in page.latest:(page.latest - page.length)) {
+    link <- str_c(page.url, "/index", page.index, ".html")
+    links.article <- c( links.article, page %>% jump_to(link) %>%
+                        html_nodes("a") %>% html_attr("href") %>% 
+                        str_subset("[A-z]\\.[0-9]+\\.[A-z]\\.[A-z0-9]+\\.html"))
+  }
+  # 過濾重複的文章連結
+  links.article <- unique(links.article)
+}
+```
+
+##### Get articles contents and parsing data
+
+將文章和留言分別以時間記錄在不同的檔案中，     
+要從 PTT 來觀察人在不同時間點所用字的情感或討論的事物有何不同。
+
+* 注意：八卦版留言有 IP 的問題尚未修改
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+if(!dir.exists("./DATA")) {
+  dir.create("./DATA")
+  for(url in links.article) {
+    url  = paste0(ptt.url, url)
+    #tag  = html_node(read_html(url), 'div#main-content.bbs-screen.bbs-content')
+    #text = toUTF8(html_text(tag))
+    
+    # 連結⾄⽂章網址
+    temp.html <- page %>% jump_to(url) 
+    
+    # 開頭部分元素，包含資訊: 發文者[1]、看板[2]、標題[3]、發文日期時間[4] 
+    article.header <- temp.html %>%
+      html_nodes("span.article-meta-value") %>% 
+      html_text()
+    
+    article.title = article.header[3]
+    article.datetime = article.header[4]
+    
+    # 取得內文
+    article.content <- temp.html %>%
+      html_nodes(xpath = '//div[@id="main-content"]/node()[not(self::div|self::span[@class="f2"])]') %>%
+      html_text(trim = TRUE) %>%
+      str_c(collapse = "")
+    
+    hour <- str_sub(article.datetime, 5) %>% parse_datetime("%b %d %H:%M:%S %Y")
+    hour <- format(hour, "%H")
+    name <- paste0('DATA/', hour, ".txt")
+    write(article.content, name, append = TRUE)
+    
+    # 擷取推⽂(in span): 
+    article.push <- temp.html %>% html_nodes("div.push") 
+    
+    # 推文種類(push-tag)、推文者(push-userid)、推文內容(push-content)、推文時間(push-ipdatetime)
+    push.table.datetime <- article.push %>% html_nodes("span.push-ipdatetime") %>%
+      html_text(trim = TRUE)
+    push.table.content <- article.push %>% html_nodes("span.push-content") %>%
+      html_text(trim = TRUE) %>% str_sub(3)
+    
+    for(i in 1: length(article.push))
+    {
+      hour <- str_c("2018/", push.table.datetime[i]) %>% parse_datetime("%Y/%m/%d %H:%M")
+      hour <- format(hour, "%H")
+      doc  <- push.table.content[i]
+      name <- paste0('DATA/', hour, ".txt")
+      write(doc, name, append = TRUE)
+    }
+  }
+}
+```
+
+##### clean data & 斷詞分析
+
+* 以每小時做分組
+* removePunctuation 移除符號、removeNumbers & function 移除英文和數字、segmentCN 斷詞
+
+```{r}
+# corpus to tdm
+# 轉向量矩陣
+docs.corpus <- Corpus(DirSource("./Data/"))
+docs.corpus <- tm_map(docs.corpus, removePunctuation)
+docs.corpus <- tm_map(docs.corpus, removeNumbers)
+docs.corpus <- tm_map(docs.corpus, function(word) {
+    gsub("[A-Za-z0-9]", "", word)
+})
+docs.seg <- tm_map(docs.corpus, segmentCN)
+docs.tdm <- TermDocumentMatrix(docs.seg, control = list())
+#inspect(docs.tdm)
+```
+
+做 matrix 轉換，讓 TF-IDF 可以進行
+
+```{r}
+mixseg = worker()
+jieba_tokenizer = function(d)
+{
+  unlist( segment(d[[1]], mixseg) )
+}
+seg = lapply(docs.corpus, jieba_tokenizer)
+
+count_token = function(d)
+{
+  as.data.frame(table(d))
+}
+tokens = lapply(seg, count_token)
+
+n = length(seg)
+TDM = tokens[[1]]
+colNames <- names(seg)
+colNames <- gsub(".txt", "", colNames)
+for( id in c(2:n) )
+{
+  TDM = merge(TDM, tokens[[id]], by="d", all = TRUE)
+  names(TDM) = c('d', colNames[1:id])
+}
+TDM[is.na(TDM)] <- 0
+library(knitr)
+kable(head(TDM))
+```
+
+```{r}
+library(Matrix)
+tf <- apply(as.matrix(TDM[,2:(n+1)]), 2, sum)
+idfCal <- function(word_doc)
+{ 
+  log2( n / nnzero(word_doc) ) 
+}
+idf <- apply(as.matrix(TDM[,2:(n+1)]), 1, idfCal)
+
+doc.tfidf <- TDM
+# for(x in 1:nrow(TDM))
+# {
+#   for(y in 2:ncol(TDM))
+#   {
+#     doc.tfidf[x,y] <- (doc.tfidf[x,y] / tf[y]) * idf[x]
+#   }
+# }
+
+tempY = matrix(rep(c(as.matrix(tf)), each = length(idf)), nrow = length(idf))
+tempX = matrix(rep(c(as.matrix(idf)), each = length(tf)), ncol = length(tf), byrow = TRUE)
+doc.tfidf[,2:(n+1)] <- (doc.tfidf[,2:(n+1)] / tempY) * tempX
+
+stopLine = rowSums(doc.tfidf[,2:(n+1)])
+delID = which(stopLine == 0)
+
+kable(head(doc.tfidf[delID,1]))
+```
+
+```{r}
+TopWords = data.frame()
+for( id in c(1:n) )
+{
+  dayMax = order(doc.tfidf[,id+1], decreasing = TRUE)
+  showResult = t(as.data.frame(doc.tfidf[dayMax[1:5],1]))
+  TopWords = rbind(TopWords, showResult)
+}
+rownames(TopWords) = colnames(doc.tfidf)[2:(n+1)]
+TopWords = droplevels(TopWords)
+kable(TopWords)
+```
+
+
+### TF-IDF
+> 一般文章中難免出現口語化或常見的用字，當樣本很多的時候，這些字出現的頻率可能佔前幾名，然而在做文字探勘的時候，這些無論高頻率或低頻率出現的單詞，可能就不是我們所希望他出現來影響結果的，除了人工過濾的做法，TF-IDF傾向於過濾掉常見的詞語，保留重要的詞語。
+
+```{r}
+docs.tf <- apply(as.matrix(docs.tdm), 2, function(doc) {doc / sum(doc)})
+idf.function <- function(word_doc) { log2( (length(word_doc)+1) / nnzero(word_doc) ) }
+docs.idf <- apply(docs.tdm, 1, idf.function)
+docs.tfidf <- docs.tf * docs.idf
+head(docs.tfidf)
+```
+  
+```{r}
+query.tfidf <- function(q){
+  q.position <- which(rownames(docs.tfidf) %in% q)
+  q.tfidf <- docs.tfidf[q.position, ]
+  return (q.tfidf)
+}
+query.tfidf(c("男生", "女生", "男友"))
+```
+
+```{r}
+library(wordcloud)
+
+# mac 的使用者要加上這行，避免文字出不來的問題
+par(family=("Heiti TC Light"))
+
+f <- sort(rowSums(docs.tfidf), decreasing = T)
+docs.df <- data.frame(
+  word = names(f),
+  freq = f
+)
+wordcloud(docs.df$word[1:120], docs.df$freq[1:120], scale=c(5,0.1), colors=brewer.pal(8, "Dark2"))
+```
+
+
+### Principal components analysis，PCA
+
+> 是一種可幫助我們使用最有影響力的特徵做資料操作的分析模型，也可以說是特徵提取的技術，透過特徵降維來避免因維度災難所造成 Overfitting 現象。
+
+```{r}
+# install.packages("factoextra")
+library(factoextra)
+docs.pca <- prcomp(docs.tfidf, scale = T)
+fviz_eig(docs.pca)
+
+fviz_pca_ind(docs.pca, geom.ind = c("point"), col.ind = "cos2")
+fviz_pca_var(docs.pca, col.var = "contrib")
+fviz_pca_biplot(docs.pca, geom.ind = "point")
+
+docs.eig <- get_eig(docs.pca)
+docs.var <- get_pca_var(docs.pca)
+docs.ind <- get_pca_ind(docs.pca)
+```
+
+
+### K-Means
+
+> 物以類聚，給定一組資料，將它分成 k 類。主要目標是在大量資料點中找出具有代表性的資料點。
+
+```{r}
+ind.coord2 <- docs.ind$coord[, c(3,4)]
+wss <- c()
+for (i in 1:10) { wss[i] <- kmeans(ind.coord2, i)$tot.withinss }
+plot(wss, type = "b")
+```
+
+[參考資料](https://www.hksilicon.com/articles/1445347)     
+
+根據上圖，隨著聚類數目增多，每一個類別中數量越來越少，距離越來越近，因此 WSS 值肯定是隨着聚類數目增多而減少的，所以我們需要關注的是斜率的變化，但 WWS 減少得很緩慢時，就認為進一步增大聚類數效果也並不能增強，存在得這個「肘點」就是最佳聚類數目，從一類到三類下降得很快，之後下降得很慢，所以最佳聚類 k 個數選為 3。
+
+```{r}
+km <- kmeans(ind.coord2, 3)
+plot(ind.coord2, col = km$cluster)
+points(km$centers, col = 1:3, pch = 8, cex = 2)
+```
+
+### References
+
+* R 軟體爬蟲和⽂字斷詞 <http://biostat.tmu.edu.tw/enews/ep_download/21rb.pdf>
+* 中文文本探勘初探：TF-IDF in R Language <http://mropengate.blogspot.com/2016/04/tf-idf-in-r-language.html>
+* K means 演算法 <https://dotblogs.com.tw/dragon229/2013/02/04/89919>
+* R筆記–(9)分群分析(Clustering) <https://rpubs.com/skydome20/R-Note9-Clustering>
