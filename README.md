@@ -29,9 +29,11 @@
     2. Learn with Text mining tool (TF-IDF, PCA, K-means)
     
 * At Home
-    1. EDA report: [hw03-1](https://yuly830914.github.io/CSX_RProject/week_03/hw03-1.html) and please download data files in [here](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
-    2. Text Mining
+    1. EDA report ( about Market-basket ): [hw03-1](https://yuly830914.github.io/CSX_RProject/week_03/hw03-1.html) and please download data files in [here](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
+    2. Text Mining ( about PTT.cc WomenTalk ): [hw03-2](https://yuly830914.github.io/CSX_RProject/week_03/hw03-2.html)
     
 ### Week 04
-    
+* In Class
+
+* At Home
     
