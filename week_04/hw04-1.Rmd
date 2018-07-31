@@ -1,0 +1,264 @@
+---
+title: "Regression of Instacart Market Basket Analysis"
+author: "Claire Liu"
+output: html_document
+---
+
+### 本週主題：納入統計學
+
+* 敘述統計：沒有假設機率模型，關注的是如何 summarize 資料也就是用幾個簡單的數字 把資料的大致趨勢或分配作出統整。
+
+* 假設檢定： [[學習筆記]統計學：假設檢定 (Hypothesis Testing)](http://murphymind.blogspot.com/2011/12/hypothesis-testing.html)
+
+  1. T-test：用來比較兩個群體的平均數（ 只能一次比較兩組 ）
+  2. ANOVA：適合連續型因子推測非連續型因子
+  
+* 迴歸分析：透過 W 值做未來的預測，但未來有可能會改變，所以回歸不是用股票預測，因為不穩定，穩定的狀況例如生物狀態（ 長高、長胖 ），在分佈是一致的時候方可使用
+
+* 機器學習：當有一個數學封閉解的時候，表示有精確解；但很多時候，我們找不到或是還找到，就必須透過有限範圍的 training，在機器學習中找到近似的答案。
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+> Regression 是透過一些統計的技巧，幫助了解資料欄位之間的關聯性。
+
+### Data Set : 來自TIMSS 的統計資料
+
+該資料集內包含了韓國、日本、台灣、香港四個國家，共計 15000 多位學生在數理方面的成績與讀書環境，包含是否有電腦、書桌、網路、自己的房間、書與書量，以及家長教育程度。
+
+### Geting & Viewing data
+
+```{r}
+# read data
+data <- read.table(file = "data/TIMSSmath.txt", header = TRUE)
+# show data
+head(data)
+# preview structure of data
+str(data)
+# preview summary of data
+summary(data)
+```
+
+### EDA of data
+
+> 下面用幾個簡單的圖表詮釋並暸解資料
+
+```{r}
+library(ggplot2)
+ggplot(data) + 
+  geom_histogram(aes(x=地科,y=..density..), position="identity") +
+  geom_density(aes(x=地科,y=..density..)) +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+```{r warning=FALSE, message=FALSE}
+library(GGally)
+set.seed(10000)
+data.samp <- subset(data, select = c(4:8))
+data.samp <- data.samp[sample(1:length(data$國家), 5000), ]
+ggpairs(data.samp,
+        lower = list(continuous = wrap("points", shape = I('.'))),
+        upper = list(combo = wrap("box", outlier.shape = I('.')))) +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+## 問題定義
+
+> 在資料中包含很多數理成績，以及讀書環境或家長因素，首先想先找出哪些科目和性別有關係，然後再慢慢加進其他的變因，來完成模型的建立。
+
+## Part A. 性別 vs 數學成績
+
+```{r}
+ggplot(data = data, aes(x = 性別, y = 數學)) +
+  geom_boxplot() + coord_flip() +
+  labs( y = "數學成績", x = "gender", title = '數學分數 Box plot') +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+```{r}
+#以下函式計算95%信賴區間
+with(data, 
+     tapply(數學, 性別,
+     function(x) 
+       c(mean(x) + c(-2, 2) * sd(x)/sqrt(length(x)))))
+```
+
+### 以 t-test 檢驗不同性別是否存在數學成績差異
+
+### T test
+
+> 這是通常用於某種資料，在觀察資料的時候，無法固定其中某些不確定因素，為了消除混雜因素的影響使其他因素不變，而採用的測試方法。
+
+以下為例，很明顯得 T-test 的 p 值大於等於 0.05，所以可以推測數學成績和性別沒有直接的關係
+
+```{r}
+#此函數會預設進行 Welch 校正，以處理兩樣本變異數不相同的問題
+t.test(數學 ~ 性別, data = data)
+
+#可加上參數 var.equal=TRUE 來假設變異數同值(不做Welch校正)
+t.test(數學 ~ 性別, data = data, var.equal = TRUE)
+```
+
+
+## Part B. 性別 vs 地科成績 vs. 國家
+
+#### 以下觀察國家是否與地科成績有關
+
+台灣在這方面的成績似乎比其他國家來得好
+
+```{r}
+ggplot(data = data, aes(x = 國家, y = 地科)) +
+  geom_boxplot() + coord_flip() +
+  labs( y = "地科成績", x =  "Country", title = '地科分數 Box plot') +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+
+```{r}
+#以下函式計算95%信賴區間
+with(data, 
+     tapply(地科, 國家,
+     function(x) 
+       c(mean(x) + c(-2, 2) * sd(x)/sqrt(length(x)))))
+```
+
+#### 以下觀察性別是否與地科成績有關
+
+```{r}
+ggplot(data = data, aes(x = 性別, y = 地科)) +
+  geom_boxplot() + coord_flip() +
+  labs( y = "地科成績", x =  "Country", title = '地科分數 Box plot') +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+```{r}
+#以下函式計算95%信賴區間
+with(data, 
+     tapply(地科, 性別,
+     function(x) 
+       c(mean(x) + c(-2, 2) * sd(x)/sqrt(length(x)))))
+```
+
+### T testing ( T 檢測 )
+
+我們找到了一個科目和性別有直接的關係。下面可以很清楚的看到 T-test 的 p 值小於等於 0.05，所以可以推測地科成績和性別有直接的關係。
+
+```{r}
+#此函數會預設進行 Welch 校正，以處理兩樣本變異數不相同的問題
+t.test(地科 ~ 性別, data = data)
+
+#可加上參數 var.equal=TRUE 來假設變異數同值(不做Welch校正)
+t.test(地科 ~ 性別, data = data, var.equal = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(Hmisc)
+#看不同性別下的地科分數平均數
+tapply(data$地科, data$性別, mean)
+```
+
+```{r}
+# 相同國家的地科分數平均數，加上信賴區間
+ggplot(data = data, 
+       aes(x = 性別, y = 地科)) +
+  stat_summary(fun.data = 'mean_cl_boot', size = 1) +
+  scale_y_continuous(breaks = seq(500, 660, by = 20)) +
+  geom_hline(yintercept = mean(data$地科) , 
+             linetype = 'dotted') +
+  labs(x = '性別', y = '地科平均分數') +
+  coord_flip() +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+
+#### 在這裡我們推測不同性別的地科成績，可能是因為不同書量造成的，畫圖觀察看看
+
+
+### ANOVA 檢驗假設
+
+```{r}
+anova(m1 <- lm(地科 ~ 性別, data = data))
+```
+
+從圖中可以推測，閱讀書量影響了成績，而女生的地科成績，普遍比男生差。
+
+```{r}
+library(magrittr)
+library(dplyr)
+
+data$書量 <- factor(data$書量, levels = c("10本以下", "11-25本",  "26-100本", "101-200本","200本以上"))
+
+data %>% 
+  group_by(書量, 性別) %>%
+  summarise(meanScore = mean(地科)) %>%
+  ggplot(aes(x=書量, y=meanScore, fill=性別)) +
+  geom_histogram(stat="identity", position="dodge") +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+### 利用以下 ANOVA 檢驗假設是否正確
+
+```{r}
+# 把書量加進模型
+anova(m2 <- update(m1, . ~ . + 書量, data = data))
+
+# 或許不是性別而是國家造成
+anova(m3 <- update(m2, . ~ . - 性別 + 國家,  data = data))
+```
+
+### 將 ANOVA 結果做成圖表輸出，先計算一些需要的數據
+
+```{r}
+#將結果放在一個list中
+res_lm <- lapply(list(m1, m2, m3), summary)
+#比較在控制教育資源下，父母教育的效果
+(res_lm[[2]]$r.sq - res_lm[[3]]$r.sq)/res_lm[[2]]$r.sq
+```
+
+```{r}
+anova(m3, m2)
+```
+
+```{r}
+#比較在控制父母教育下，教育資源的效果
+(res_lm[[2]]$r.sq - res_lm[[1]]$r.sq)/res_lm[[1]]$r.sq
+```
+
+```{r}
+anova(m1, m2)
+```
+
+### 正式畫圖
+
+```{r}
+require(coefplot)
+m2 <- lm(地科 ~ 國家 + 性別 - 1,  data = data)
+coefplot(m2, xlab = '估計值', ylab = '迴歸變項', title = '反應變項 = 地科分數') +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+### 加入資料與迴歸分析的預測值、殘差與影響度
+
+```{r}
+fit_m2 <- data.frame(data[, c(1, 6, 2)], fitted = fitted(m2), resid = resid(m2),
+                     infl = influence(m2)$hat )
+```
+
+### 依國家疊合真實觀測值與預測值
+
+```{r}
+ggplot(data = fit_m2, aes(x = 地科, group = 國家)) +
+  stat_density(geom = 'path', position = 'identity') +
+  stat_density(geom = 'path', position = 'identity', aes(x = fitted)) +
+  geom_vline(xintercept = c(with(data, tapply(地科,國家, mean))), linetype = 'dotted')+
+  facet_grid(國家 ~ .) +
+  scale_x_continuous(breaks = seq(200, 900, by = 100))+
+  labs(x = '地科分數', y = '機率密度') +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+
+##### References
+
+* [Mac 的 TextEdit 文件如何存成 UTF-8 的 txt 檔](https://medium.com/彼得潘的-swift-ios-app-開發問題解答集/mac-的-textedit-文件如何存成-txt-檔-5f647c1582ac)
