@@ -52,6 +52,12 @@ ggplot(data) +
   theme(text=element_text(family="Heiti TC Light"))
 ```
 
+### 問題定義：連續變數 vs. 連續變數
+
+> 分數之間是否存在某種關係，例如數學不好，物理就不好等等的。
+
+##### 比較兩兩分數間的關係，了解所有學科分數之間的相關性
+
 ```{r warning=FALSE, message=FALSE}
 library(GGally)
 set.seed(10000)
@@ -63,11 +69,45 @@ ggpairs(data.samp,
   theme(text=element_text(family="Heiti TC Light"))
 ```
 
-## 問題定義
+##### 檢定數學與物理相關性是否顯著，也可以看到信賴區間
 
-> 在資料中包含很多數理成績，以及讀書環境或家長因素，首先想先找出哪些科目和性別有關係，然後再慢慢加進其他的變因，來完成模型的建立。
+> cor.test : 相關性檢測，可檢定 t 值、df ( 自由度 )、p值、顯著與信賴區間。
+
+檢測結果說明兩者有相關。所以我們可以知道數學不好，物理成績也不會好。
+
+```{r}
+cor.test( ~ 數學 + 物理, data = data[,4:8])
+```
+
+```{r}
+cor.test( ~ 數學 + 生物, data = data[,4:8])
+```
+
+無法直接比較 p 值，但可以參考 cor 檢測的值
+
+```{r}
+#載進 Hmist，一次檢定所有相關
+require(Hmisc)
+rcorr(as.matrix(data[,4:8]), type=c("pearson","spearman"))
+```
+
+#####  Null hypothesis rejected
+
+> 數學和物理的相關性與數學和生物的相關性都很高，但當一起比較究竟誰高的時候，假設被拒絕，沒有顯著差異，所以可以說相關性是差不多的。
+
+```{r}
+#檢驗數學與物理、數學與生物何者相關高
+require(cocor)
+cocor(~數學 + 物理 | 數學 + 生物, data[,4:8])
+```
+
+## 問題定義：連續變數 vs. 類別變數
+
+> 在資料中包含讀書環境或家長因素，想先找出哪些科目和性別有關係，然後再慢慢加進其他的變因，來完成模型的建立。
 
 ## Part A. 性別 vs 數學成績
+
+> 數學成績和性別沒有顯著關係。
 
 ```{r}
 ggplot(data = data, aes(x = 性別, y = 數學)) +
@@ -105,7 +145,7 @@ t.test(數學 ~ 性別, data = data, var.equal = TRUE)
 
 #### 以下觀察國家是否與地科成績有關
 
-台灣在這方面的成績似乎比其他國家來得好
+> 台灣在地科這方面的成績似乎比其他國家來得好
 
 ```{r}
 ggplot(data = data, aes(x = 國家, y = 地科)) +
@@ -113,7 +153,6 @@ ggplot(data = data, aes(x = 國家, y = 地科)) +
   labs( y = "地科成績", x =  "Country", title = '地科分數 Box plot') +
   theme(text=element_text(family="Heiti TC Light"))
 ```
-
 
 ```{r}
 #以下函式計算95%信賴區間
@@ -171,9 +210,14 @@ ggplot(data = data,
   theme(text=element_text(family="Heiti TC Light"))
 ```
 
+##### 看看家裡有無網路跟地科間的關係
+
+```{r}
+ggplot(data, aes(地科, colour = 網路)) + geom_density() +
+   theme(text=element_text(family="Heiti TC Light"))
+```
 
 #### 在這裡我們推測不同性別的地科成績，可能是因為不同書量造成的，畫圖觀察看看
-
 
 ### ANOVA 檢驗假設
 
@@ -181,7 +225,7 @@ ggplot(data = data,
 anova(m1 <- lm(地科 ~ 性別, data = data))
 ```
 
-從圖中可以推測，閱讀書量影響了成績，而女生的地科成績，普遍比男生差。
+> 從圖中可以推測，閱讀書量影響了成績，而女生的地科成績，普遍比男生差。但是性別和國家之間似乎沒有直接的關係，每個國家的男生成績平均比女生高。
 
 ```{r}
 library(magrittr)
@@ -233,7 +277,7 @@ anova(m1, m2)
 
 ```{r}
 require(coefplot)
-m2 <- lm(地科 ~ 國家 + 性別 - 1,  data = data)
+m2 <- lm(地科 ~ 父母教育 + 性別 - 1,  data = data)
 coefplot(m2, xlab = '估計值', ylab = '迴歸變項', title = '反應變項 = 地科分數') +
   theme(text=element_text(family="Heiti TC Light"))
 ```
@@ -241,23 +285,36 @@ coefplot(m2, xlab = '估計值', ylab = '迴歸變項', title = '反應變項 = 
 ### 加入資料與迴歸分析的預測值、殘差與影響度
 
 ```{r}
-fit_m2 <- data.frame(data[, c(1, 6, 2)], fitted = fitted(m2), resid = resid(m2),
+fit_m2 <- data.frame(data[, c(6, 2, 9, 10, 11)], 
+                     fitted = fitted(m2), 
+                     resid = resid(m2), 
                      infl = influence(m2)$hat )
 ```
 
 ### 依國家疊合真實觀測值與預測值
 
 ```{r}
-ggplot(data = fit_m2, aes(x = 地科, group = 國家)) +
+ggplot(data = fit_m2, aes(x = 地科, group = 性別)) +
   stat_density(geom = 'path', position = 'identity') +
   stat_density(geom = 'path', position = 'identity', aes(x = fitted)) +
-  geom_vline(xintercept = c(with(data, tapply(地科,國家, mean))), linetype = 'dotted')+
-  facet_grid(國家 ~ .) +
+  geom_vline(xintercept = c(with(data, tapply(地科,性別, mean))), linetype = 'dotted')+
+  facet_grid(性別 ~ .) +
   scale_x_continuous(breaks = seq(200, 900, by = 100))+
   labs(x = '地科分數', y = '機率密度') +
   theme(text=element_text(family="Heiti TC Light"))
 ```
 
+
+## Part C. 分析資料集當中的其他變項是否和地科成績有關
+
+##### 看看不同國家、有無電腦的學生地科平均與對應的平均數標準誤
+
+```{r}
+summary(m4 <- lm(地科 ~ 國家 + 電腦, data = data[, c('電腦', '地科', '國家') ]))
+coefplot(m4, predictors = c('電腦', '地科', '國家'),
+         xlab = '估計值', ylab = '迴歸變項(去除截距)', title = '反應變項是地科分數') +
+  theme(text=element_text(family="Heiti TC Light"))
+```
 
 ##### References
 
