@@ -210,13 +210,6 @@ ggplot(data = data,
   theme(text=element_text(family="Heiti TC Light"))
 ```
 
-##### 看看家裡有無網路跟地科間的關係
-
-```{r}
-ggplot(data, aes(地科, colour = 網路)) + geom_density() +
-   theme(text=element_text(family="Heiti TC Light"))
-```
-
 #### 在這裡我們推測不同性別的地科成績，可能是因為不同書量造成的，畫圖觀察看看
 
 ### ANOVA 檢驗假設
@@ -277,7 +270,7 @@ anova(m1, m2)
 
 ```{r}
 require(coefplot)
-m2 <- lm(地科 ~ 父母教育 + 性別 - 1,  data = data)
+m2 <- lm(地科 ~ 書量 + 性別 - 1,  data = data)
 coefplot(m2, xlab = '估計值', ylab = '迴歸變項', title = '反應變項 = 地科分數') +
   theme(text=element_text(family="Heiti TC Light"))
 ```
@@ -285,7 +278,7 @@ coefplot(m2, xlab = '估計值', ylab = '迴歸變項', title = '反應變項 = 
 ### 加入資料與迴歸分析的預測值、殘差與影響度
 
 ```{r}
-fit_m2 <- data.frame(data[, c(6, 2, 9, 10, 11)], 
+fit_m2 <- data.frame(data[, c(1, 6, 2, 9, 10, 11)], 
                      fitted = fitted(m2), 
                      resid = resid(m2), 
                      infl = influence(m2)$hat )
@@ -294,11 +287,11 @@ fit_m2 <- data.frame(data[, c(6, 2, 9, 10, 11)],
 ### 依國家疊合真實觀測值與預測值
 
 ```{r}
-ggplot(data = fit_m2, aes(x = 地科, group = 性別)) +
+ggplot(data = fit_m2, aes(x = 地科, group = 國家)) +
   stat_density(geom = 'path', position = 'identity') +
   stat_density(geom = 'path', position = 'identity', aes(x = fitted)) +
-  geom_vline(xintercept = c(with(data, tapply(地科,性別, mean))), linetype = 'dotted')+
-  facet_grid(性別 ~ .) +
+  geom_vline(xintercept = c(with(data, tapply(地科,國家, mean))), linetype = 'dotted')+
+  facet_grid(國家 ~ .) +
   scale_x_continuous(breaks = seq(200, 900, by = 100))+
   labs(x = '地科分數', y = '機率密度') +
   theme(text=element_text(family="Heiti TC Light"))
@@ -307,15 +300,18 @@ ggplot(data = fit_m2, aes(x = 地科, group = 性別)) +
 
 ## Part C. 分析資料集當中的其他變項是否和地科成績有關
 
-##### 看看不同國家、有無電腦的學生地科平均與對應的平均數標準誤
+##### 看看家裡有無網路跟地科間的關係
 
 ```{r}
-summary(m4 <- lm(地科 ~ 國家 + 電腦, data = data[, c('電腦', '地科', '國家') ]))
-coefplot(m4, predictors = c('電腦', '地科', '國家'),
+ggplot(data, aes(地科, colour = 網路)) + geom_density() +
+   theme(text=element_text(family="Heiti TC Light"))
+```
+
+##### 看看不同國家、有無網路的學生地科平均與對應的平均數標準誤
+
+```{r}
+summary(m4 <- lm(地科 ~ 國家 + 網路, data = data[, c('網路', '地科', '國家') ]))
+coefplot(m4, predictors = c('網路', '地科', '國家'),
          xlab = '估計值', ylab = '迴歸變項(去除截距)', title = '反應變項是地科分數') +
   theme(text=element_text(family="Heiti TC Light"))
 ```
-
-##### References
-
-* [Mac 的 TextEdit 文件如何存成 UTF-8 的 txt 檔](https://medium.com/彼得潘的-swift-ios-app-開發問題解答集/mac-的-textedit-文件如何存成-txt-檔-5f647c1582ac)
