@@ -38,6 +38,6 @@
     2. EDA of new dataset
 
 * At Home
-    1. Deep EDA of TIMSS dataset : : [hw04-1](https://yuly830914.github.io/CSX_RProject/week_04/hw04-1.html)
+    1. Deep EDA of TIMSS dataset : [hw04-1](https://yuly830914.github.io/CSX_RProject/week_04/hw04-1.html)
     2. Find the final project subject
     
