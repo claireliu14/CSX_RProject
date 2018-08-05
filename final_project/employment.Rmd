@@ -1,0 +1,168 @@
+---
+title: "台灣青年 ( 15-29歲 ) 就業資料 EDA"
+author: "Claire Liu"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+# import libraries
+library(RCurl)
+library(XML)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+### [人力資源調查就業人數](https://data.gov.tw/dataset/6797)
+
+* 單位：千人
+
+```{r message=FALSE, warning=FALSE}
+# read data
+# 使用 RCurl 先取得內容，並且設定 encoding的方式，否則會亂碼
+# 使用 XML parse 資料
+xml.url <- "https://www.dgbas.gov.tw/public/data/open/Cen/MP0101A03.xml"
+xml.content <- getURL(xml.url, .encoding="UTF-8")
+xml.doc <- xmlParse(xml.content)
+xml.df <- xmlToDataFrame(xml.doc)
+
+# Clear data
+# 資料轉換為數值
+# 為空白資料補上 NA，並且刪除這些 row
+xml.df[, -1] <- lapply(xml.df[, -1], function(x) as.numeric(as.character(x)))
+xml.df[ xml.df == "" ] <- NA
+xml.df <- xml.df[complete.cases(xml.df), ]
+```
+
+
+```{r}
+# 過濾掉每個月的統計資料，選出和年齡有關的資料
+xml.df.year <- xml.df[!str_detect(xml.df[,1], "[0-9]M[0-9]"), c(1,2,5:15)] 
+head(xml.df.year)
+
+emp.young <- rowSums(xml.df.year[, c(3:5)])
+emp.other <- rowSums(xml.df.year[, c(6:13)])
+emp.year  <- as.Date(unique(xml.df.year[, 1]), format="%Y")
+
+data.frame(year = emp.year, young_pop = emp.young, other_pop = emp.other) %>%
+  ggplot(aes(x = year, group = 1)) +
+  geom_density(aes(y = young_pop), stat = "identity", fill="yellow", alpha=.5) +
+  geom_density(aes(y = other_pop), stat = "identity", fill="red", alpha=.3) +
+  labs(x = "年", y = "就業人口數（單位：千人）", 
+       title = "1978至2017年台灣就業人口調查數據") +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+> 每年到了七、八月和新的一年就會有新一波的就業潮出現，前者屬於畢業季，後者推測是換工作或是另一波的畢業潮。
+
+```{r}
+xml.df.month <- xml.df[str_detect(xml.df[,1], "[0-9]M[0-9]"), c(1,5:7)] %>% 
+  separate(項目別_Iterm, c("year", "month"), "M")
+head(xml.df.month)
+
+emp.young <- rowSums(xml.df.month[, c(3:5)])
+
+data.frame(year=xml.df.month$year, month=xml.df.month$month, young=emp.young) %>%
+  filter(year != 2018) %>%
+  group_by(month) %>%
+  summarise(young = mean(young)) %>%
+  ggplot(aes(x=month, y=young, group=1)) + geom_point() + geom_line() +
+  labs(x = "月", y = "就業人口數（單位：千人）", 
+       title = "臺灣每月青年就業趨勢（1978至2017年每月就業平均數據）") +
+  theme(text=element_text(family="Heiti TC Light"))
+```
+
+### [勞工生活及就業狀況調查](https://data.gov.tw/dataset/9819)
+
+> 勞工對 工作場所、工作時數、工資、工作負荷量、整體工作 之滿意情形
+
+```{r message=FALSE, warning=FALSE}
+# read Data
+library(jsonlite)
+json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-urh"
+json.content <- getURL(json.url, .encoding="UTF-8")
+sati.place <- fromJSON(json.content)$result$records
+
+json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-AA6"
+json.content <- getURL(json.url, .encoding="UTF-8")
+sati.time <- fromJSON(json.content)$result$records
+
+json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-bfP"
+json.content <- getURL(json.url, .encoding="UTF-8")
+sati.price <- fromJSON(json.content)$result$records
+
+json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-0t2"
+json.content <- getURL(json.url, .encoding="UTF-8")
+sati.load <- fromJSON(json.content)$result$records
+
+json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-oBu"
+json.content <- getURL(json.url, .encoding="UTF-8")
+sati.overall <- fromJSON(json.content)$result$records
+```
+
+```{r}
+# preprocessing
+sati.age.place <- subset(sati.place, 統計項目別 == "年齡")
+sati.age.place$統計項目別 <- "工作場所"
+
+sati.age.time <- subset(sati.time, 統計項目別 == "年齡")
+sati.age.time$統計項目別 <- "工作時數"
+
+sati.age.price <- subset(sati.price, 統計項目別 == "年齡")
+sati.age.price$統計項目別 <- "工資"
+
+sati.age.load <- subset(sati.load, 統計項目別 == "年齡")
+sati.age.load$統計項目別 <- "工作負荷量"
+
+sati.age.overall <- subset(sati.overall, 統計項目別 == "年齡")
+sati.age.overall$統計項目別 <- "整體工作"
+
+# clean data
+sati.age <- rbind(sati.age.place, sati.age.time, sati.age.price, sati.age.load, sati.age.overall)
+sati.age[ sati.age == "-" ] <- NA
+sati.age$`樣本數（人）` <- as.integer(sati.age$`樣本數（人）`)
+sati.age$`很滿意（%）` <- as.numeric(sati.age$`很滿意（%）`)
+sati.age$`滿意（%）` <- as.numeric(sati.age$`滿意（%）`)
+sati.age$`普通（%）` <- as.numeric(sati.age$`普通（%）`)
+sati.age$`不滿意（%）` <- as.numeric(sati.age$`不滿意（%）`)
+sati.age$`很不滿意（%）` <- as.numeric(sati.age$`很不滿意（%）`)
+head(sati.age)
+```
+
+> 工作場所環境和整體工作滿意度顯示普遍為青年所能接受的，而不滿意度較高的則出現在工資和工作時數，工作負荷量呈現滿意和普通將近一半。
+
+```{r message=FALSE, warning=FALSE}
+# 轉置data.frame，方便畫圖
+sati.data <- sati.age %>% gather("程度", value, -1:-2)
+head(sati.data)
+
+sati.data$程度 <- factor(sati.data$程度,
+                       levels=c("很滿意（%）" , "滿意（%）", "普通（%）", "不滿意（%）", "很不滿意（%）", "樣本數（人）"),
+                       ordered = TRUE)
+sati.data %>%
+  filter(程度!="樣本數（人）" & 細項=="15-24歲") %>%
+  ggplot(aes(x=0, y=value, fill=程度)) +
+  geom_bar(stat="identity") +
+  coord_polar("y", start=0) +
+  theme(axis.text.y=element_blank(), 
+        axis.title.y = element_blank(), 
+        axis.ticks.y=element_blank(),
+        text=element_text(family="Heiti TC Light")) +
+  facet_wrap(~統計項目別)+
+  labs(title = "臺灣15-24歲青年勞工生活及就業狀況調查", y=element_blank())
+```
+
+
+### References
+
+* Split data frame string column into multiple columns <https://stackoverflow.com/questions/4350440/>
+* How to convert data.frame column from Factor to numeric [duplicate] <https://stackoverflow.com/questions/27528907/>
+* jsonlite: R的JSON格式資料處理套件 <https://blog.gtwang.org/r/jsonlite-json-format-parser-generator-tutorial/>
+* 用ggplot2繪製Excel常見圖 <http://psy-data.github.io/2016/excel2ggplot.html>
+
