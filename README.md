@@ -32,7 +32,7 @@
     1. EDA report ( about Market-basket ): [hw03-1](https://yuly830914.github.io/CSX_RProject/week_03/hw03-1.html) and please download data files in [here](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
     2. Text Mining ( about PTT.cc WomenTalk ): [hw03-2](https://yuly830914.github.io/CSX_RProject/week_03/hw03-2.html)
     
-### Week 04 - 07/21
+### Week 04 - 07/25
 * In Class
     1. Learn strategy of model ( T-test, ANOVA, Regression )
     2. EDA of new dataset
@@ -41,3 +41,13 @@
     1. Deep EDA of TIMSS dataset : [hw04-1](https://yuly830914.github.io/CSX_RProject/week_04/hw04-1.html)
     2. Find the final project subject
     
+### Week 05 - 08/01
+* In Class
+    1. 叡揚資訊講座
+    2. Learn with Shiny
+    
+* At Home
+    1. Put last week's homework on Shiny
+    2. Final poject: [final-project](https://yuly830914.github.io/CSX_RProject/final_project/employment.html)
+    
+### Week 06 - 08/08
