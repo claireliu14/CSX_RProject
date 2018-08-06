@@ -158,6 +158,87 @@ sati.data %>%
   labs(title = "臺灣15-24歲青年勞工生活及就業狀況調查", y=element_blank())
 ```
 
+### [歷年就業者之獲得現職方法](https://data.gov.tw/dataset/9765)
+
+> 求職方法趨勢變化：
+
+```{r message=FALSE, warning=FALSE}
+# read data
+xml.url <- "https://www.dgbas.gov.tw/public/data/open/Cen/Mp0101A12.xml"
+xml.content <- getURL(xml.url, .encoding="UTF-8")
+xml.doc <- xmlParse(xml.content)
+xml.df <- xmlToDataFrame(xml.doc)
+
+# Clear data
+xml.df[,-1] <- as.integer(gsub("\\s+", "", as.matrix(xml.df[,-1])))
+xml.df <- xml.df %>% gather("方法", value, -1:-2)
+xml.df$方法 <- str_split_fixed(xml.df$方法, "_", 2)[,1]
+xml.df$項目別_Iterm  <- as.Date(unique(xml.df$項目別_Iterm), format="%Y")
+head(xml.df)
+
+xml.df %>%
+  ggplot(aes(x=項目別_Iterm, y=value/總__計_Total, color=方法)) +
+  geom_line() + geom_point() +
+  theme(text=element_text(family="Heiti TC Light")) +
+  labs(title = "臺灣歷年就業者獲取現職的方法數據（1980-2017年）", y="年", x="比例")
+```
+
+### [大專畢業生就業概況分析](https://data.gov.tw/dataset/31158)
+
+```{r warning=FALSE, message=FALSE}
+library(data.table)
+
+# read file
+data.price <- read.table(file = "Student_RPT_19_price.txt", 
+                         header = TRUE, fileEncoding='big5', sep=",")
+data.class <- read.table(file = "Student_RPT_19_class.txt", 
+                         header = TRUE, fileEncoding='big5', sep=",")
+
+# clear data
+data.price <- data.price %>% gather("學歷", value, -1:-4)
+data.price$value <- as.integer(gsub(",", "", data.price$value))
+data.price <- data.price[complete.cases(data.price), ]
+
+# draw plot
+setDT(data.price)
+setDT(data.class)
+```
+
+> 不同畢業年度、薪資年和不同學歷的學生
+
+```{r}
+min <- min(filter(data.price, 畢業年度==100 & 到職年==103 & 學歷=="碩士")$value)
+max <- max(filter(data.price, 畢業年度==100 & 到職年==103 & 學歷=="碩士")$value)
+
+data.price %>% 
+  mutate(學門代碼=as.integer(學類代碼%/%100)) %>%
+  left_join(data.class %>% select(學門代碼, 學門名稱), by="學門代碼") %>%
+  filter(畢業年度==100 & 到職年==103 & 學歷=="碩士") %>%
+  ggplot(aes(x=學門名稱, y=value, color=學門名稱)) +
+  geom_boxplot()+
+  geom_hline(aes(yintercept=mean(value)),linetype=5,col="red")+
+  theme(text=element_text(family="Heiti TC Light"),
+        axis.text.x=element_text(angle=90, hjust=1),
+        legend.position="none") +
+  labs(title = "大專以上不同學門畢業生就業平均月薪", y="平均月薪") +
+  ylim(min, max)
+```
+
+```{r warning=FALSE, message=FALSE}
+data.price %>% 
+  mutate(學門代碼=as.integer(學類代碼%/%100)) %>%
+  left_join(data.class %>% select(學門代碼, 學門名稱), by="學門代碼") %>%
+  filter(畢業年度==100 & 到職年==103 & 學歷=="學士") %>%
+  filter(學門代碼==14) %>%
+  ggplot() +
+  geom_histogram(aes(x=reorder(學類名稱,value), y=value, fill=value), stat="identity") +
+  geom_hline(aes(yintercept=mean(value)),linetype=5,col="red")+
+  theme(text=element_text(family="Heiti TC Light"),
+        axis.text.x=element_text(angle=90, hjust=1),
+        legend.position="none") +
+  labs(title = "大專以上特定學門不同學類畢業生就業平均月薪", y="平均月薪", x="學類名稱")+
+  scale_colour_gradient2()
+```
 
 ### References
 
@@ -165,4 +246,6 @@ sati.data %>%
 * How to convert data.frame column from Factor to numeric [duplicate] <https://stackoverflow.com/questions/27528907/>
 * jsonlite: R的JSON格式資料處理套件 <https://blog.gtwang.org/r/jsonlite-json-format-parser-generator-tutorial/>
 * 用ggplot2繪製Excel常見圖 <http://psy-data.github.io/2016/excel2ggplot.html>
+* 大專院校100年畢業生103年職場薪資圖 by 用數據看臺灣 <https://www.taiwanstat.com/statistics/graduate_100/>    
+
 
