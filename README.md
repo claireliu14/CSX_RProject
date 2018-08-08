@@ -51,3 +51,6 @@
     2. Final poject: [final-project](https://yuly830914.github.io/CSX_RProject/final_project/employment.html)
     
 ### Week 06 - 08/08
+* [臺灣青年就業環境狀況探討](https://claire-liu.shinyapps.io/YouthEmployment/)
+
+* [投影片](https://docs.google.com/presentation/d/1Jp7PeDjWLMxoYbdR-pp-7UQUR-UNukl1DFnpWUTajdU/edit?usp=sharing)
