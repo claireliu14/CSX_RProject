@@ -1,3 +1,11 @@
+library(ggplot2)
+library(base)
+library(dplyr)
+library(readr)
+library(readxl)
+library(tidyr) 
+library(splines)
+
 # 就業創業資料--------------
 d2 = read_csv("Data_Nei/datappl.csv")
 d2 <- na.omit(d2)

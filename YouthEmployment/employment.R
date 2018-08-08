@@ -1,3 +1,11 @@
+library(RCurl)
+library(XML)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+
 # 人力資源調查就業人數
 xml.url <- "https://www.dgbas.gov.tw/public/data/open/Cen/MP0101A03.xml"
 xml.content <- getURL(xml.url, .encoding="UTF-8")
@@ -18,21 +26,26 @@ xml.df.month$year <- xml.df.month$year %>% as.numeric()
 emp.month.young <- rowSums(xml.df.month[, c(3:5)])
 
 # 勞工生活及就業狀況調查
-json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-urh"
-json.content <- getURL(json.url, .encoding="UTF-8")
-sati.place <- fromJSON(json.content)$result$records
-json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-AA6"
-json.content <- getURL(json.url, .encoding="UTF-8")
-sati.time <- fromJSON(json.content)$result$records
-json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-bfP"
-json.content <- getURL(json.url, .encoding="UTF-8")
-sati.price <- fromJSON(json.content)$result$records
-json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-0t2"
-json.content <- getURL(json.url, .encoding="UTF-8")
-sati.load <- fromJSON(json.content)$result$records
-json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-oBu"
-json.content <- getURL(json.url, .encoding="UTF-8")
-sati.overall <- fromJSON(json.content)$result$records
+#json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-urh"
+#json.content <- getURL(json.url, .encoding="UTF-8")
+sati.place <- fromJSON('EMP_DATA/A17000000J-020078-NcS.json')
+
+#json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-AA6"
+#json.content <- getURL(json.url, .encoding="UTF-8")
+sati.time <- fromJSON('EMP_DATA/A17000000J-020078-ofu.json')
+
+#json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-bfP"
+#json.content <- getURL(json.url, .encoding="UTF-8")
+sati.price <- fromJSON('EMP_DATA/A17000000J-020078-eIa.json')
+
+#json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-0t2"
+#json.content <- getURL(json.url, .encoding="UTF-8")
+sati.load <- fromJSON('EMP_DATA/A17000000J-020078-9Kq.json')
+
+#json.url <- "https://apiservice.mol.gov.tw/OdService/rest/datastore/A17000000J-020078-oBu"
+#json.content <- getURL(json.url, .encoding="UTF-8")
+sati.overall <- fromJSON('EMP_DATA/A17000000J-020078-LPO.json')
+
 sati.age.place <- subset(sati.place, 統計項目別 == "年齡")
 sati.age.place$統計項目別 <- "工作場所"
 sati.age.time <- subset(sati.time, 統計項目別 == "年齡")
@@ -68,8 +81,6 @@ xml.get.job.df[,-1] <- as.integer(gsub("\\s+", "", as.matrix(xml.get.job.df[,-1]
 xml.get.job.df <- xml.get.job.df %>% gather("方法", value, -1:-2)
 xml.get.job.df$方法 <- str_split_fixed(xml.get.job.df$方法, "_", 2)[,1]
 xml.get.job.df$項目別_Iterm  <- as.numeric(as.character(xml.get.job.df$項目別_Iterm))
-xml.get.job.year.min <- min(xml.get.job.df$項目別_Iterm)
-xml.get.job.year.max <- max(xml.get.job.df$項目別_Iterm)
 
 # 大專畢業生就業概況分析
 data.price <- read.table(file = "EMP_DATA/Student_RPT_19_price.txt", header = TRUE, fileEncoding='big5', sep=",")
@@ -80,5 +91,3 @@ data.price <- data.price[complete.cases(data.price), ]
 data.price <- data.price %>% 
   mutate(學門代碼=as.integer(學類代碼%/%100)) %>%
   left_join(data.class %>% select(學門代碼, 學門名稱), by="學門代碼")
-min <- min(filter(data.price, 畢業年度==100 & 到職年==103 & 學歷=="碩士")$value)
-max <- max(filter(data.price, 畢業年度==100 & 到職年==103 & 學歷=="碩士")$value)
