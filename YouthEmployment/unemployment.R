@@ -1,0 +1,13 @@
+# Data
+Y_UN_YTOTAL <-read.csv("Data_Yao/Y_UN_YEAR_TOTAL.csv")
+Y_UN_YALL <-read.csv("Data_Yao/Y_UN_YEAR_ALL.csv")
+Y_UN_YALL_g <-gather(Y_UN_YALL[,-2],age, age_un,-c(YEAR))
+Y_UN_YALL_g[,2]<-gsub("AGE.","",Y_UN_YALL_g[,2])
+Y_UN_YALL_g[,2]<-gsub(".To.","~",Y_UN_YALL_g[,2])
+Y_UN_WHY <-read.csv("Data_Yao/Y_UN_WHY.csv", header=T, sep=",")
+colnames(Y_UN_WHY) = c("YEARS","AGE","初次工作","業務緊縮或歇業","對工作不滿意","健康不良","季節或臨時結束","女性結婚或生育","退休","家務太忙","其他")
+Y_UN_WHY_g <-gather(Y_UN_WHY,why, why_un,-c(AGE,YEARS))
+Y_UN_EDU <-read.csv("Data_Yao/Y_UN_EDU.csv", header=T, sep=",")
+Y_UN_EDU <-subset(Y_UN_EDU[,-3])
+colnames(Y_UN_EDU) = c("YEAR","AGE","國小及以下","國中","高中","高職","專科","大學","研究所")
+Y_UN_EDU_g <-gather(Y_UN_EDU,edu, edu_un,-c(AGE,YEAR))

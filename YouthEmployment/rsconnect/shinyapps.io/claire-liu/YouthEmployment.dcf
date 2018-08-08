@@ -1,0 +1,12 @@
+name: YouthEmployment
+title: YouthEmployment
+username:
+account: claire-liu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 396913
+bundleId: 1524047
+url: https://claire-liu.shinyapps.io/YouthEmployment/
+when: 1533698118.5248
+asMultiple: FALSE
+asStatic: FALSE
