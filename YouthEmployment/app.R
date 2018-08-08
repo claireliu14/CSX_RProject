@@ -103,9 +103,14 @@ ui <- shinyUI (
                         sidebarLayout(
                           sidebarPanel(
                             selectInput('C_EMP_SATI_AGE', h6('Select age range'),
-                                        unique(sati.age$細項), selectize = TRUE)
+                                        unique(sati.age$細項), selectize = TRUE),
+                            
+                            selectInput('C_EMP_SATI_AGE_COMPARE', h6('選擇不同項目'),
+                                        unique(sati.age$統計項目別), selectize = TRUE)
                           ),
-                          mainPanel(plotOutput("C_EMP_SATI"))
+                          mainPanel(
+                            plotOutput("C_EMP_SATI"),
+                            plotOutput("C_EMP_SATI_COMPARE"))
                         )),
                
                tabPanel("求職方法趨勢變化",
@@ -122,7 +127,7 @@ ui <- shinyUI (
                           mainPanel(plotOutput("C_EMP_GET_JOB"))
                         )),
                
-               tabPanel("專畢業生就業狀況分析",
+               tabPanel("大專以上畢業生就業狀況分析",
                         tags$h3("不同學類學門畢業起薪（平均月薪）參考"),
                         br(),
                         sidebarLayout(
@@ -245,7 +250,8 @@ server <- function(input, output)
                  color = "black", size=0.5)+
       geom_hline(yintercept=Y_UN_YTOTAL[input$Y_UN_YTOTAL_I-81,4], linetype="dashed", 
                  color = "black", size=0.5) +
-      labs(x="年(民國)",y="人數(千人)",title = "青年失業人口總統計\n\n民國82年至106年(15~29歲)\n\n單位：千人")+
+      labs(x="年(民國)",y="人數(千人)",title = "青年失業人口總統計\n\n民國82年至106年(15~29歲)\n\n單位：千人",
+           caption="資料來源：中華民國統計資料網\n\n(表18　歷年失業者之年齡)")+
       guides(color=FALSE)
     PlotThroughShowtext(g)
   }
@@ -268,7 +274,8 @@ server <- function(input, output)
       geom_bar(stat = "identity") +
       coord_polar("y", start=0)+
       scale_x_continuous(breaks=c(0,0,0))+
-      labs(x=paste("民國 ",input$Y_UN_YTOTAL_I,"年"),y="人數(千人)",title = paste("民國",input$Y_UN_YTOTAL_I,"年失業人口各年齡結構\n\n單位：千人"))
+      labs(x=paste("民國 ",input$Y_UN_YTOTAL_I,"年"),y="人數(千人)",title = paste("民國",input$Y_UN_YTOTAL_I,"年失業人口各年齡結構\n\n單位：千人"),
+           caption="資料來源：中華民國統計資料網\n\n(表18　歷年失業者之年齡)")
     PlotThroughShowtext(g)
   }
   )
@@ -279,7 +286,8 @@ server <- function(input, output)
         geom_bar(stat="identity",position = position_stack(reverse = TRUE)) +
         coord_flip() +
         theme(legend.position = "top")+
-        labs(x="人數(人)",y="原因",title = paste("民國",input$Y_UN_WHY_I,"年青年各原因失業人數\n\n單位：人"))
+        labs(x="人數(人)",y="原因",title = paste("民國",input$Y_UN_WHY_I,"年青年各原因失業人數\n\n單位：人"),
+             caption="資料來源：中華民國統計資料網\n\n(表61　失業者之失業原因－按年齡分齡)")
       PlotThroughShowtext(g)
     }
   )
@@ -338,7 +346,8 @@ server <- function(input, output)
                    color = "black", size=0.5) +
         geom_hline(yintercept=Y_UN_WHY_Data_X[input$Y_UN_WHY_I-81,2], linetype="dashed", 
                    color = "black", size=0.5)+
-        labs(x="年(民國)",y="人數(人)",title = paste(input$Y_UN_WHY_I_S," 的歷年青年失業人數統計\n\n單位：人"))
+        labs(x="年(民國)",y="人數(人)",title = paste(input$Y_UN_WHY_I_S," 的歷年青年失業人數統計\n\n單位：人"),
+             caption="資料來源：中華民國統計資料網\n\n(表61　失業者之失業原因－按年齡分齡)")
       PlotThroughShowtext(g)
     }
   )
@@ -364,7 +373,8 @@ server <- function(input, output)
         #刻度
         scale_x_continuous(breaks=Y_UN_EDU_Data_X$YEAR)+
         scale_y_continuous(breaks=seq(min(Y_UN_EDU_g$edu_un),max(Y_UN_EDU_g$edu_un),as.integer((max(Y_UN_EDU_g$edu_un)-min(Y_UN_EDU_g$edu_un))/25))) +
-        labs(x="年(民國)",y="人數(人)",title = "民國100~106年\n\n歷年失業與教育人數統計\n\n單位：人")+
+        labs(x="年(民國)",y="人數(人)",title = "民國100~106年\n\n歷年失業與教育人數統計\n\n單位：人",
+             caption="資料來源：中華民國統計資料網\n\n(表59　失業者之教育程度－按年齡分)")+
         #關閉圖示
         guides(alpha=FALSE)
       PlotThroughShowtext(g)
@@ -379,8 +389,9 @@ server <- function(input, output)
       geom_density(aes(y = young_pop), stat = "identity", fill="yellow", alpha=.5) +
       geom_density(aes(y = other_pop), stat = "identity", fill="red", alpha=.3) +
       labs(x = "年", y = "就業人口數（單位：千人）", 
-           title = "1978至2017年台灣就業人口調查數據") +
-      theme(text=element_text(family="Heiti TC"))
+           title = "1978至2017年台灣就業人口調查數據",
+           caption="資料來源：政府資料開放平臺 - 人力資源調查就業人數") +
+      theme(text=element_text(family="wqy-microhei"))
     PlotThroughShowtext(g)
   })
   
@@ -392,8 +403,9 @@ server <- function(input, output)
       summarise(young = mean(young)) %>%
       ggplot(aes(x=month, y=young, group=1)) + geom_point() + geom_line() +
       labs(x = "月", y = "就業人口數（單位：千人）", 
-           title = "臺灣每月青年就業趨勢（1978至2017年每月就業平均數據）") +
-      theme(text=element_text(family="Heiti TC"))
+           title = "臺灣每月青年就業趨勢（1978至2017年每月就業平均數據）",
+           caption="資料來源：政府資料開放平臺 - 人力資源調查就業人數") +
+      theme(text=element_text(family="wqy-microhei"))
     PlotThroughShowtext(g)
   })
   
@@ -406,9 +418,21 @@ server <- function(input, output)
       theme(axis.text.y=element_blank(), 
             axis.title.y = element_blank(), 
             axis.ticks.y=element_blank(),
-            text=element_text(family="Heiti TC Light")) +
+            text=element_text(family="wqy-microhei")) +
       facet_wrap(~統計項目別)+
-      labs(title = "臺灣15-24歲青年勞工生活及就業狀況調查", y=element_blank())
+      labs(title = "臺灣15-24歲青年勞工生活及就業狀況調查", y=element_blank(),
+           caption="資料來源：政府資料開放平臺 - 勞工生活及就業狀況調查")
+    PlotThroughShowtext(g)
+  })
+  
+  output$C_EMP_SATI_COMPARE <- renderPlot({
+    g <- sati.data %>%
+      filter(統計項目別==input$C_EMP_SATI_AGE_COMPARE & 程度!="樣本數（人）" ) %>%
+      ggplot(aes(x=細項, y=value, color=程度, group=程度)) +
+      geom_point() + geom_line() +
+      theme(text=element_text(family="wqy-microhei"))+
+      labs(title = "不同統計項目別之滿意度檢視", y="滿意度", x="年齡分佈",
+           caption="資料來源：政府資料開放平臺 - 勞工生活及就業狀況調查")
     PlotThroughShowtext(g)
   })
   
@@ -418,8 +442,9 @@ server <- function(input, output)
       filter(項目別_Iterm<=input$C_GET_JOB_SLIDER) %>%
       ggplot(aes(x=項目別_Iterm, y=value/總__計_Total, color=方法)) +
       geom_line() + geom_point() +
-      theme(text=element_text(family="Heiti TC Light")) +
-      labs(title = "臺灣歷年就業者獲取現職的方法數據（1980-2017年）", y="年", x="比例")
+      theme(text=element_text(family="wqy-microhei")) +
+      labs(title = "臺灣歷年就業者獲取現職的方法數據（1980-2017年）", y="年", x="比例",
+           caption="資料來源：政府資料開放平臺 - 歷年就業者之獲得現職方法")
     PlotThroughShowtext(g)
   })
   
@@ -429,11 +454,11 @@ server <- function(input, output)
       ggplot(aes(x=學門名稱, y=value, color=學門名稱)) +
       geom_boxplot()+
       geom_hline(aes(yintercept=mean(value)),linetype=5,col="red")+
-      theme(text=element_text(family="Heiti TC Light"),
-            axis.text.x=element_text(angle=90, hjust=1),
+      theme(text=element_text(family="wqy-microhei"),
             legend.position="none") +
-      labs(title = "大專以上不同學門畢業生就業平均月薪", y="平均月薪") +
-      ylim(min, max)
+      labs(title = "大專以上不同學門畢業生就業平均月薪", y="平均月薪",
+           caption="資料來源：政府資料開放平臺 - 大專畢業生就業概況分析") +
+      ylim(min, max) + coord_flip()
     PlotThroughShowtext(g)
   })
   
@@ -444,11 +469,12 @@ server <- function(input, output)
       ggplot() +
       geom_histogram(aes(x=reorder(學類名稱,value), y=value, fill=value), stat="identity") +
       geom_hline(aes(yintercept=mean(value)),linetype=5,col="red")+
-      theme(text=element_text(family="Heiti TC Light"),
+      theme(text=element_text(family="wqy-microhei"),
             axis.text.x=element_text(angle=90, hjust=1),
             legend.position="none") +
-      labs(title = "大專以上特定學門不同學類畢業生就業平均月薪", y="平均月薪", x="學類名稱") +
-      scale_colour_gradient2()
+      labs(title = "大專以上特定學門不同學類畢業生就業平均月薪", y="平均月薪", x="學類名稱",
+           caption="資料來源：政府資料開放平臺 - 大專畢業生就業概況分析") +
+      scale_colour_gradient2() + coord_flip()
     PlotThroughShowtext(g)
   })
   
