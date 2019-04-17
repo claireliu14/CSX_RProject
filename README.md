@@ -10,18 +10,18 @@
     4. Create a RMarkDown file
     
 * At Home
-    1. DataCamp - Introduction to R: [hw01-1](https://yuly830914.github.io/CSX_RProject/week_01/hw01-1.html)
-    2. DataCamp - Intermediate R: [hw01-2](https://yuly830914.github.io/CSX_RProject/week_01/hw01-2.html)
-    3. DataCamp - Introduction to the Tidyverse: [hw01-3](https://yuly830914.github.io/CSX_RProject/week_01/hw01-3.html)
+    1. DataCamp - Introduction to R: [hw01-1](https://claireliu14.github.io/CSX_RProject/week_01/hw01-1.html)
+    2. DataCamp - Intermediate R: [hw01-2](https://claireliu14.github.io/CSX_RProject/week_01/hw01-2.html)
+    3. DataCamp - Introduction to the Tidyverse: [hw01-3](https://claireliu14.github.io/CSX_RProject/week_01/hw01-3.html)
 
 ### Week 02 - 07/11
 * In Class
-    1. Data Visualization by ggplot2: [hw02-1](https://yuly830914.github.io/CSX_RProject/week_02/hw02-1.html)
-    2. Word Cloud: [hw02-2](https://yuly830914.github.io/CSX_RProject/week_02/hw02-2.html)
+    1. Data Visualization by ggplot2: [hw02-1](https://claireliu14.github.io/CSX_RProject/week_02/hw02-1.html)
+    2. Word Cloud: [hw02-2](https://claireliu14.github.io/CSX_RProject/week_02/hw02-2.html)
     
 * At Home
     1. DataCamp - Exploratory data analysis
-    2. Map ( ggmap ) : [hw02-4](https://yuly830914.github.io/CSX_RProject/week_02/hw02-4.html)
+    2. Map ( ggmap ) : [hw02-4](https://claireliu14.github.io/CSX_RProject/week_02/hw02-4.html)
     
 ### Week 03 - 07/18
 * In Class
@@ -29,8 +29,8 @@
     2. Learn with Text mining tool (TF-IDF, PCA, K-means)
     
 * At Home
-    1. EDA report ( about Market-basket ): [hw03-1](https://yuly830914.github.io/CSX_RProject/week_03/hw03-1.html) and please download data files in [here](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
-    2. Text Mining ( about PTT.cc WomenTalk ): [hw03-2](https://yuly830914.github.io/CSX_RProject/week_03/hw03-2.html)
+    1. EDA report ( about Market-basket ): [hw03-1](https://claireliu14.github.io/CSX_RProject/week_03/hw03-1.html) and please download data files in [here](https://www.kaggle.com/c/instacart-market-basket-analysis/data)
+    2. Text Mining ( about PTT.cc WomenTalk ): [hw03-2](https://claireliu14.github.io/CSX_RProject/week_03/hw03-2.html)
     
 ### Week 04 - 07/25
 * In Class
@@ -38,7 +38,7 @@
     2. EDA of new dataset
 
 * At Home
-    1. Deep EDA of TIMSS dataset : [hw04-1](https://yuly830914.github.io/CSX_RProject/week_04/hw04-1.html)
+    1. Deep EDA of TIMSS dataset : [hw04-1](https://claireliu14.github.io/CSX_RProject/week_04/hw04-1.html)
     2. Find the final project subject
     
 ### Week 05 - 08/01
@@ -48,7 +48,7 @@
     
 * At Home
     1. Put last week's homework on Shiny
-    2. Final poject: [final-project](https://yuly830914.github.io/CSX_RProject/final_project/employment.html)
+    2. Final poject: [final-project](https://claireliu14.github.io/CSX_RProject/final_project/employment.html)
     
 ### Week 06 - 08/08
 * [臺灣青年就業環境狀況探討](https://claire-liu.shinyapps.io/YouthEmployment/)
